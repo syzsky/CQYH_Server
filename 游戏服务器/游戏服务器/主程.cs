@@ -9,7 +9,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using _0008_0006_0005_0007_000F_000E_0004_0003;
+using AutoBattle;
 using _001D_000F_0007_0013_0011_0015;
 using 游戏服务器.地图类;
 using 游戏服务器.管理命令;
@@ -964,7 +964,7 @@ namespace 游戏服务器
                 await 主程.WebPostLoop();
             });
 
-            _000B_0018_0019_0016_0004_0018.Start();
+            AutoBattleManager.Start();
 
             机器人.初始化();
             while (主程.已经启动 || 网络服务网关.网络连接表.Count != 0)

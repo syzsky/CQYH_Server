@@ -5,7 +5,7 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using _0015_0003_0007_000E_000D_000D;
+using WebApi;
 using 游戏服务器.地图类;
 using 游戏服务器.数据类;
 
@@ -45,7 +45,7 @@ namespace 游戏服务器.网络类
 
         //public static Http门票接收器 门票接收器Http;
 
-        //private static _0001_0018_000E_0012_0007_0006 http;
+        //private static WebApiService http;
 
         public static void 启动服务()
         {
@@ -66,7 +66,7 @@ namespace 游戏服务器.网络类
                 网络服务网关.门票接收器Http = new Http门票接收器(Settings.Http门票接收端口, 网络服务网关.Http门票数据);
                 网络服务网关.门票接收器Http.Start();
             }
-            //网络服务网关.http = new _0001_0018_000E_0012_0007_0006();
+            //网络服务网关.http = new WebApiService();
             //网络服务网关.http.Start();
             */
         }
@@ -85,7 +85,7 @@ namespace 游戏服务器.网络类
 
                 case 1:
                     网络服务网关.http?.Stop();
-                    网络服务网关.http = new _0001_0018_000E_0012_0007_0006();
+                    网络服务网关.http = new WebApiService();
                     网络服务网关.http.Start();
                     主程.添加系统日志("充值接口服务已重启");
                     break;

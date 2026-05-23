@@ -13,9 +13,9 @@ using 游戏服务器.数据类;
 using 游戏服务器.网络类;
 using Newtonsoft.Json;
 
-namespace _0015_0003_0007_000E_000D_000D
+namespace WebApi
 {
-    internal class _0001_0018_000E_0012_0007_0006 : HttpService
+    internal class WebApiService : HttpService
     {
         public class roleInfo
         {
@@ -42,7 +42,7 @@ namespace _0015_0003_0007_000E_000D_000D
 
         private Thread _000C_000F_0003_0004_0014_0019;
 
-        public _0001_0018_000E_0012_0007_0006()
+        public WebApiService()
         {
             //base.Host = $"http://+:{Settings.充值监听端口}/";
         }
@@ -75,7 +75,7 @@ namespace _0015_0003_0007_000E_000D_000D
                 {
                     dictionary.Remove("sign");
                     string text2;
-                    text2 = _0001_0018_000E_0012_0007_0006.Sign(_0001_0018_000E_0012_0007_0006.http_build_query(dictionary.OrderBy((KeyValuePair<string, string> p) => p.Key).ToDictionary((KeyValuePair<string, string> p) => p.Key, (KeyValuePair<string, string> o) => o.Value)));
+                    text2 = WebApiService.Sign(WebApiService.http_build_query(dictionary.OrderBy((KeyValuePair<string, string> p) => p.Key).ToDictionary((KeyValuePair<string, string> p) => p.Key, (KeyValuePair<string, string> o) => o.Value)));
                     // 常量时间比较防时序攻击; 同时 Sign() 在密钥未配置时返回固定哨兵, 此比较必然 false.
                     bool 签名有效 = value != null && text2 != null && value.Length == text2.Length
                         && System.Security.Cryptography.CryptographicOperations.FixedTimeEquals(

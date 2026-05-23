@@ -9866,7 +9866,7 @@ namespace 游戏服务器.地图类
 
         public void 玩家拆分物品(byte 当前背包, byte 物品位置, ushort 拆分数量, byte 目标背包, byte 目标位置)
         {
-            if (!this.对象死亡 && this.摆摊状态 <= 0 && this.交易状态 < 3 && 当前背包 == 1 && this.角色背包.TryGetValue(物品位置, out var v) && 目标背包 == 1 && 目标位置 < this.背包大小 && v != null && v.持久类型 == 物品持久分类.堆叠 && v.当前持久.V > 拆分数量 && !this.角色背包.TryGetValue(目标位置, out var _))
+            if (!this.对象死亡 && this.摆摊状态 <= 0 && this.交易状态 < 3 && 当前背包 == 1 && this.角色背包.TryGetValue(物品位置, out var v) && 目标背包 == 1 && 目标位置 < this.背包大小 && 物品位置 != 目标位置 && v != null && v.持久类型 == 物品持久分类.堆叠 && 拆分数量 > 0 && v.当前持久.V > 拆分数量 && !this.角色背包.TryGetValue(目标位置, out var _))
             {
                 if (v.是否上锁)
                 {
@@ -11155,6 +11155,10 @@ namespace 游戏服务器.地图类
                 {
                     this.角色背包.TryGetValue(物品位置, out v);
                 }
+                if (v == null)
+                {
+                    return;
+                }
                 if (v.是否上锁)
                 {
                     base.发送封包(new 游戏错误提示
@@ -11162,7 +11166,7 @@ namespace 游戏服务器.地图类
                         错误代码 = 1890
                     });
                 }
-                else if (v != null && !v.是否绑定 && v.出售类型 != 0 && value.回收类型 == v.出售类型)
+                else if (!v.是否绑定 && v.出售类型 != 0 && value.回收类型 == v.出售类型)
                 {
                     this.角色背包.Remove(物品位置);
                     主程.添加物品日志(this, "出售商店物品", v, 1, this.对话守卫?.对象名字);
@@ -11516,15 +11520,19 @@ namespace 游戏服务器.地图类
                     错误代码 = 1821
                 });
             }
+            else if (物品数据.出售价格 < 0)
+            {
+                this.网络连接?.尝试断开连接(new Exception("错误操作: 玩家回购物品, 错误: 出售价格非法"));
+            }
             else if (value.回购物品(物品数据))
             {
+                this.回购清单.RemoveAt(物品位置);
                 this.金币数量 -= (uint)物品数据.出售价格;
                 主程.添加货币日志(this, "回购商店物品->" + 物品数据.物品名字, 游戏货币.金币, -物品数据.出售价格);
                 if (this.角色背包.TryGetValue((byte)num, out var v2))
                 {
                     v2.当前持久.V += 物品数据.当前持久.V;
                     主程.添加物品日志(this, "回购商店物品", 物品数据, 物品数据.当前持久.V, this.对话守卫?.对象名字);
-                    value.回购物品(物品数据);
                     物品数据.删除数据();
                     this.网络连接?.发送封包(new 玩家物品变动
                     {
@@ -13094,8 +13102,12 @@ namespace 游戏服务器.地图类
                     b++;
                     continue;
                 }
-                this.角色数据.升级装备.V = null;
-                return true;
+                主程.添加系统日志($"[取回装备失败] {this.角色数据.角色名字.V} 背包无空位, 装备保留: {this.角色数据.升级装备.V?.物品名字}", hardLog: true);
+                this.网络连接?.发送封包(new 游戏错误提示
+                {
+                    错误代码 = 1793
+                });
+                return false;
             }
             this.金币数量 -= (uint)扣除金币;
             this.角色背包[b] = this.角色数据.升级装备.V;
@@ -17606,9 +17618,14 @@ namespace 游戏服务器.地图类
                 this.网络连接?.尝试断开连接(new Exception("错误操作: 放入摊位物品, 错误: 背包类型错误"));
                 return;
             }
-            if (物品价格 < 100)
+            if (物品价格 < 100 || 物品价格 > 1000000000)
             {
                 this.网络连接?.尝试断开连接(new Exception("错误操作: 放入摊位物品, 错误: 物品价格错误"));
+                return;
+            }
+            if (物品数量 <= 0)
+            {
+                this.网络连接?.尝试断开连接(new Exception("错误操作: 放入摊位物品, 错误: 物品数量错误"));
                 return;
             }
             if (!this.角色背包.TryGetValue(物品位置, out var v))
@@ -17759,7 +17776,14 @@ namespace 游戏服务器.地图类
                 });
                 return;
             }
-            if (this.金币数量 < value.当前摊位.物品单价[value2] * 购买数量)
+            long 总价检查;
+            总价检查 = (long)value.当前摊位.物品单价[value2] * (long)购买数量;
+            if (总价检查 <= 0 || 总价检查 > int.MaxValue)
+            {
+                this.网络连接?.尝试断开连接(new Exception("错误操作: 购买摊位物品, 错误: 总价计算溢出"));
+                return;
+            }
+            if ((long)this.金币数量 < 总价检查)
             {
                 this.网络连接?.发送封包(new 游戏错误提示
                 {
@@ -17790,7 +17814,7 @@ namespace 游戏服务器.地图类
                 return;
             }
             int num;
-            num = value.当前摊位.物品单价[value2] * 购买数量;
+            num = (int)总价检查;
             this.扣金币((uint)num);
             主程.添加货币日志(this, "购买摊位物品->" + value2.物品名字, 游戏货币.金币, -num);
             this.角色数据.转出金币.V += num;
@@ -21950,11 +21974,26 @@ namespace 游戏服务器.地图类
             {
                 return;
             }
+            if (找回次数 <= 0 || 找回次数 > ushort.MaxValue || 日程编号 < 0 || 日程编号 > ushort.MaxValue)
+            {
+                this.网络连接?.尝试断开连接(new Exception("错误操作: 找回日程奖励, 错误: 参数非法"));
+                return;
+            }
+            if (!常量类.找回奖励字典.ContainsKey((ushort)日程编号) || !常量类.找回奖励费用.ContainsKey((ushort)日程编号) || !常量类.找回奖励物品1.ContainsKey((ushort)日程编号))
+            {
+                return;
+            }
             ushort num;
             num = 常量类.找回奖励字典[(ushort)日程编号];
+            long num2L;
+            num2L = (long)常量类.找回奖励费用[(ushort)日程编号] * (long)找回次数;
+            if (num2L <= 0 || num2L > int.MaxValue)
+            {
+                return;
+            }
             int num2;
-            num2 = 常量类.找回奖励费用[(ushort)日程编号] * 找回次数;
-            if (this.角色数据.找回奖励.TryGetValue((ushort)日程编号, out var v) && v + 找回次数 <= num)
+            num2 = (int)num2L;
+            if (this.角色数据.找回奖励.TryGetValue((ushort)日程编号, out var v) && (long)v + (long)找回次数 <= (long)num)
             {
                 List<物品数据> list;
                 list = this.查找背包物品(2315, num2);

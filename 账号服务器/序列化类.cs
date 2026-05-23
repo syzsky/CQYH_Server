@@ -62,7 +62,8 @@ namespace 账号服务器
 		public static object[] 反序列化(string 文件夹, Type 类型)
 		{
 			List<object> list = new List<object>();
-			FileInfo[] files = new DirectoryInfo(文件夹).GetFiles();
+			// 仅扫描 .txt, 避免 desktop.ini / .DS_Store 等系统文件触发反序列化失败.
+			FileInfo[] files = new DirectoryInfo(文件夹).GetFiles("*.txt");
 			for (int i = 0; i < files.Length; i++)
 			{
 				object obj = JsonConvert.DeserializeObject(File.ReadAllText(files[i].FullName), 类型, 全局设置);

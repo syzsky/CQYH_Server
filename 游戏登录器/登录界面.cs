@@ -5,6 +5,8 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Net;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
@@ -77,6 +79,45 @@ namespace 游戏登录器
             登录_错误提示标签.Visible = false;
             注册_错误提示标签.Visible = false;
             修改_错误提示标签.Visible = false;
+        }
+
+        // 启动游戏前对游戏可执行文件做 Authenticode 弱模式校验：
+        // - 未签名 → 跳过（兼容未签名的开发构建，fail-open）
+        // - 已签名但链不合法 → 询问用户是否继续
+        // - 已签名且链合法 → 通过
+        // 返回 true 表示可以继续启动游戏。
+        private static bool 校验游戏可执行文件(string path)
+        {
+            try
+            {
+                using (var sig = X509Certificate.CreateFromSignedFile(path))
+                using (var cert2 = new X509Certificate2(sig))
+                using (var chain = new X509Chain())
+                {
+                    chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+                    if (!chain.Build(cert2))
+                    {
+                        DialogResult r = MessageBox.Show(
+                            "游戏可执行文件签名校验失败, 可能已被篡改. 是否继续启动?",
+                            "安全警告",
+                            MessageBoxButtons.YesNo,
+                            MessageBoxIcon.Warning,
+                            MessageBoxDefaultButton.Button2);
+                        return r == DialogResult.Yes;
+                    }
+                    return true;
+                }
+            }
+            catch (CryptographicException)
+            {
+                // 未签名：保持现状，允许启动（项目可能尚未配置发布签名）
+                return true;
+            }
+            catch
+            {
+                // 校验过程意外错误不阻塞启动，仅当签名明确无效时才提示
+                return true;
+            }
         }
 
         // 限制账号/密码这类用户输入：去掉控制字符与协议分隔符（空格），限制最大长度
@@ -196,6 +237,14 @@ namespace 游戏登录器
                             break;
                         }
                         用户界面解锁(null, null);
+                        // 不信任服务器回显：账号/密码字段必须满足客户端字符集与长度约束，
+                        // 否则后续会被拼进进入游戏的请求包里把脏字符塞出去
+                        if (!是合法用户输入(array[2], 32) || !是合法用户输入(array[3], 32))
+                        {
+                            登录_错误提示标签.Text = "服务器响应格式异常";
+                            登录_错误提示标签.Visible = true;
+                            break;
+                        }
                         string text2 = (登录账号 = (启动_当前账号标签.Text = array[2]));
                         登录密码 = array[3];
                         启动_选择游戏区服.Items.Clear();
@@ -283,13 +332,20 @@ namespace 游戏登录器
                         }
                         else if (游戏区服.TryGetValue(启动_选中区服标签.Text, out value))
                         {
+                            const string 游戏路径 = ".\\Binaries\\Win32\\MMOGame-Win32-Shipping.exe";
+                            // 登录器以管理员权限运行, 在拉起游戏前做一次签名校验, 降低本地权限提升攻击面
+                            if (!校验游戏可执行文件(游戏路径))
+                            {
+                                用户界面解锁(null, null);
+                                break;
+                            }
                             string 区服名 = 启动_选中区服标签.Text;
                             string 票据 = array[4];
                             string arguments = "-wegame=" + $"1,1,{value.Address},{value.Port}," + $"1,1,{value.Address},{value.Port}," + 区服名 + "  " + $"/ip:1,1,{value.Address} " + $"/port:{value.Port} " + "/ticket:" + 票据 + " /AreaName:" + 区服名;
                             Settings.Default.保存区服 = 区服名;
                             Settings.Default.Save();
                             游戏进程 = new Process();
-                            游戏进程.StartInfo.FileName = ".\\Binaries\\Win32\\MMOGame-Win32-Shipping.exe";
+                            游戏进程.StartInfo.FileName = 游戏路径;
                             游戏进程.StartInfo.Arguments = arguments;
                             游戏进程.StartInfo.UseShellExecute = false;
                             游戏进程.StartInfo.WorkingDirectory = Environment.CurrentDirectory;
@@ -321,10 +377,18 @@ namespace 游戏登录器
 
         public void 游戏进程检查(object sender, EventArgs e)
         {
-            if (游戏进程 != null && 游戏进程.HasExited)
+            try
             {
-                用户界面解锁(null, null);
-                托盘_恢复到任务栏(null, null);
+                if (游戏进程 != null && 游戏进程.HasExited)
+                {
+                    用户界面解锁(null, null);
+                    托盘_恢复到任务栏(null, null);
+                    游戏进程监测.Enabled = false;
+                }
+            }
+            catch
+            {
+                // Process 句柄异常不能让监测定时器停摆
                 游戏进程监测.Enabled = false;
             }
         }
@@ -520,6 +584,15 @@ namespace 游戏登录器
                 注册_错误提示标签.Visible = true;
                 return;
             }
+            // 防止 \t \n \r \0 等控制字符塞进密码/密保字段
+            if (!是合法用户输入(注册_账号密码输入框.Text, 18)
+                || !是合法用户输入(注册_密保问题输入框.Text, 18)
+                || !是合法用户输入(注册_密保答案输入框.Text, 18))
+            {
+                注册_错误提示标签.Text = "包含非法字符";
+                注册_错误提示标签.Visible = true;
+                return;
+            }
             if (网络通信.发送数据(Encoding.UTF8.GetBytes($"{++封包编号} 1 " + 注册_账号名字输入框.Text + " " + 注册_账号密码输入框.Text + " " + 注册_密保问题输入框.Text + " " + 注册_密保答案输入框.Text)))
             {
                 用户界面锁定();
@@ -588,6 +661,16 @@ namespace 游戏登录器
                 修改_错误提示标签.Visible = true;
                 return;
             }
+            // 修改密码各字段同样过滤控制字符
+            if (!是合法用户输入(修改_账号名字输入框.Text, 32)
+                || !是合法用户输入(修改_账号密码输入框.Text, 18)
+                || !是合法用户输入(修改_密保问题输入框.Text, 18)
+                || !是合法用户输入(修改_密保答案输入框.Text, 18))
+            {
+                修改_错误提示标签.Text = "包含非法字符";
+                修改_错误提示标签.Visible = true;
+                return;
+            }
             if (网络通信.发送数据(Encoding.UTF8.GetBytes($"{++封包编号} 2 " + 修改_账号名字输入框.Text + " " + 修改_账号密码输入框.Text + " " + 修改_密保问题输入框.Text + " " + 修改_密保答案输入框.Text)))
             {
                 用户界面锁定();
@@ -633,10 +716,17 @@ namespace 游戏登录器
         {
             e.DrawBackground();
             e.DrawFocusRectangle();
-            StringFormat stringFormat = new StringFormat();
-            stringFormat.Alignment = StringAlignment.Center;
-            stringFormat.LineAlignment = StringAlignment.Center;
-            e.Graphics.DrawString(启动_选择游戏区服.Items[e.Index].ToString(), e.Font, new SolidBrush(e.ForeColor), e.Bounds, stringFormat);
+            if (e.Index < 0 || e.Index >= 启动_选择游戏区服.Items.Count)
+            {
+                return;
+            }
+            using (StringFormat stringFormat = new StringFormat())
+            using (SolidBrush brush = new SolidBrush(e.ForeColor))
+            {
+                stringFormat.Alignment = StringAlignment.Center;
+                stringFormat.LineAlignment = StringAlignment.Center;
+                e.Graphics.DrawString(启动_选择游戏区服.Items[e.Index].ToString(), e.Font, brush, e.Bounds, stringFormat);
+            }
         }
 
         private void 启动_选择游戏区服_SelectedIndexChanged(object sender, EventArgs e)

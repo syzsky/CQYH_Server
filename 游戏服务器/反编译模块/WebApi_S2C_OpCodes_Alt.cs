@@ -1,4 +1,4 @@
-namespace _0015_0003_0007_000E_000D_000D
+namespace WebApi
 {
 	internal enum _000D_0008_0009_0005_000C_0006_000D_0003
 	{

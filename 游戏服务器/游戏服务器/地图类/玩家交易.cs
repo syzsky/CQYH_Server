@@ -123,6 +123,8 @@ namespace 游戏服务器.地图类
 			{
 				byte b;
 				b = 0;
+				bool 已放入3;
+				已放入3 = false;
 				while (b < this.交易接收方.背包大小)
 				{
 					if (this.交易接收方.角色背包.ContainsKey(b))
@@ -138,13 +140,38 @@ namespace 游戏服务器.地图类
 						物品描述 = value3.字节描述()
 					});
 					主程.添加物品日志(this.交易接收方, "玩家交易物品", value3, 1, "来自->" + this.交易申请方.角色数据.角色名字.V);
+					已放入3 = true;
 					break;
+				}
+				if (!已放入3)
+				{
+					byte br;
+					br = 0;
+					while (br < this.交易申请方.背包大小)
+					{
+						if (this.交易申请方.角色背包.ContainsKey(br))
+						{
+							br++;
+							continue;
+						}
+						this.交易申请方.角色背包.Add(br, value3);
+						value3.物品容器.V = 1;
+						value3.物品位置.V = br;
+						this.交易申请方.网络连接?.发送封包(new 玩家物品变动
+						{
+							物品描述 = value3.字节描述()
+						});
+						主程.添加系统日志($"[玩家交易回退] {this.交易接收方.角色数据.角色名字.V} 背包无空位, 物品[{value3.物品名字}|{value3.物品编号}]返还给 {this.交易申请方.角色数据.角色名字.V}", hardLog: false);
+						break;
+					}
 				}
 			}
 			foreach (物品数据 value4 in this.接收方物品.Values)
 			{
 				byte b2;
 				b2 = 0;
+				bool 已放入4;
+				已放入4 = false;
 				while (b2 < this.交易申请方.背包大小)
 				{
 					if (this.交易申请方.角色背包.ContainsKey(b2))
@@ -160,7 +187,30 @@ namespace 游戏服务器.地图类
 						物品描述 = value4.字节描述()
 					});
 					主程.添加物品日志(this.交易申请方, "玩家交易物品", value4, 1, "来自->" + this.交易接收方.角色数据.角色名字.V);
+					已放入4 = true;
 					break;
+				}
+				if (!已放入4)
+				{
+					byte br2;
+					br2 = 0;
+					while (br2 < this.交易接收方.背包大小)
+					{
+						if (this.交易接收方.角色背包.ContainsKey(br2))
+						{
+							br2++;
+							continue;
+						}
+						this.交易接收方.角色背包.Add(br2, value4);
+						value4.物品容器.V = 1;
+						value4.物品位置.V = br2;
+						this.交易接收方.网络连接?.发送封包(new 玩家物品变动
+						{
+							物品描述 = value4.字节描述()
+						});
+						主程.添加系统日志($"[玩家交易回退] {this.交易申请方.角色数据.角色名字.V} 背包无空位, 物品[{value4.物品名字}|{value4.物品编号}]返还给 {this.交易接收方.角色数据.角色名字.V}", hardLog: false);
+						break;
+					}
 				}
 			}
 			if (this.申请方金币 > 0)

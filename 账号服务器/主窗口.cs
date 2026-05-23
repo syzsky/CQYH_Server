@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -28,7 +29,8 @@ namespace 账号服务器
 
         public static string 数据目录 = ".\\Accounts";
 
-        public static Dictionary<string, 账号数据> 账号数据;
+        // 账号数据 由多个网络工作线程读写, UI 线程也会读 .Count, 必须线程安全.
+        public static ConcurrentDictionary<string, 账号数据> 账号数据;
 
         public static Dictionary<string, IPEndPoint> 区服数据;
 
@@ -101,10 +103,10 @@ namespace 账号服务器
 
         public static void 添加账号(账号数据 账号)
         {
-            if (!账号数据.ContainsKey(账号.账号名字))
+            // TryAdd 原子地保证不会被并发覆盖, 同时避免 ContainsKey -> Add 的 TOCTOU.
+            if (账号数据.TryAdd(账号.账号名字, 账号))
             {
-                账号数据 账号2 = (账号数据[账号.账号名字] = 账号);
-                保存账号(账号2);
+                保存账号(账号);
             }
         }
 
@@ -277,7 +279,7 @@ namespace 账号服务器
 
         private void 加载账号按钮_Click(object sender, EventArgs e)
         {
-            账号数据 = new Dictionary<string, 账号数据>();
+            账号数据 = new ConcurrentDictionary<string, 账号数据>();
             if (!Directory.Exists(数据目录))
             {
                 添加日志("账号目录不存在, 已自动创建");
