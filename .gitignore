@@ -1,0 +1,92 @@
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.userprefs
+
+# Build results
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Ll]og/
+[Ll]ogs/
+
+# Build artifacts
+*.dll
+*.pdb
+*.exe
+*.cache
+*.ilk
+*.lib
+*.obj
+*.tlh
+*.tli
+*.tlog
+*.vshost.*
+*.VC.db
+*.VC.opendb
+*.aps
+*.ncb
+*.opensdf
+*.sdf
+*.opendb
+*.unsuccessfulbuild
+
+# NuGet
+packages/
+*.nupkg
+*.snupkg
+.nuget/
+*.nuget.props
+*.nuget.targets
+
+# ReSharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# Rider
+.idea/
+
+# JetBrains
+*.sln.iml
+
+# Backup & temp
+*.bak
+*.swp
+*.tmp
+*~
+
+# OS
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+
+# Test coverage
+coverage/
+*.coverage
+*.coveragexml
+TestResults/
+
+# Publish
+PublishProfiles/
+publish/
+PublishScripts/
+
+# IIS
+inetpub/
+
+# Logs
+*.log

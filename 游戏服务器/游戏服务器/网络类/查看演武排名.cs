@@ -1,0 +1,8 @@
+namespace 游戏服务器.网络类
+{
+	[封包信息描述(来源 = 封包来源.客户端, 编号 = 624, 长度 = 6, 注释 = "查看演武排名")]
+	public sealed class 查看演武排名 : 游戏封包
+	{
+		public override ushort 封包编号 => 624;
+	}
+}

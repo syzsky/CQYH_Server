@@ -1,0 +1,11 @@
+namespace 游戏服务器.网络类
+{
+	[封包信息描述(来源 = 封包来源.客户端, 编号 = 164, 长度 = 3, 注释 = "行会仓库刷新")]
+	public sealed class 行会仓库刷新 : 游戏封包
+	{
+		[封包字段描述(下标 = 2, 长度 = 1)]
+		public byte 仓库页面;
+
+		public override ushort 封包编号 => 164;
+	}
+}

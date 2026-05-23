@@ -1,0 +1,32 @@
+namespace AStar
+{
+	public class Cell
+	{
+		public bool Blocked;
+
+		public bool Closed;
+
+		public double F;
+
+		public double G;
+
+		public double H;
+
+		public Vector2Int Location;
+
+		public Cell Parent;
+
+		public int QueueIndex;
+
+		public Cell(Vector2Int location, bool _Blocked = false)
+		{
+			this.Location = location;
+			this.Blocked = _Blocked;
+		}
+
+		public override string ToString()
+		{
+			return $"[{this.Location.X},{this.Location.Y}]";
+		}
+	}
+}
