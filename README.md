@@ -71,64 +71,53 @@ YH_Server_Code/
 
 > 阅读本仓库前请认真阅读本节。继续浏览、克隆、Fork 或基于本仓库二次开发即视为已知悉并同意以下条款。完整法律条款见 [LICENSE](LICENSE)，本节为面向用户的通俗摘要。
 
-### 1. 代码来源
-
-本仓库的核心代码**并非全新原创**，而是对某商业游戏服务端 DLL 经过以下加工后的产物：
-- 反编译还原（de4dot / dnSpy 等工具）
-- 反混淆与命名空间重命名（详见 [CHANGELOG.md](CHANGELOG.md)）
-- 安全漏洞修复与休眠后门中和（详见 [SECURITY_AUDIT.md](SECURITY_AUDIT.md)）
-- 结构重组与可读性优化
-
-仓库维护者**不主张对原始代码的所有权**，原始代码版权归原作者所有。
-
-### 2. 允许的用途
+### 1. 允许的用途
 
 - ✅ **个人学习**：研究 .NET 8 / C# / Windows Forms / 游戏服务端架构 / 网络协议设计
 - ✅ **学术研究**：发表关于本项目的安全分析、架构论文、漏洞披露报告
 - ✅ **二次开发**：用于个人项目、毕业设计、技术演示，需保留 LICENSE、SECURITY_AUDIT.md、CHANGELOG.md
 - ✅ **安全审计**：基于 SECURITY_AUDIT.md 继续挖掘漏洞或验证已修复项
 
-### 3. 禁止的用途
+### 2. 禁止的用途
 
 - ❌ **商业运营**：直接部署本代码运营游戏服务器、收取玩家充值或会员费
 - ❌ **盈利分发**：以付费形式分发本仓库内容或衍生作品
 - ❌ **去除声明**：重新分发时移除 LICENSE / SECURITY_AUDIT.md / CHANGELOG.md / 本节免责声明
 - ❌ **违法使用**：任何违反所在司法管辖区相关法律的使用方式
 
-### 4. 安全提示
+### 3. 安全提示
 
 本代码经过审计但**仍存在协议级安全洞**（明文密码、未鉴权门票转发等，详见 SECURITY_AUDIT.md 中 PROTO-01 ~ PROTO-08）。即使仅用于学习，也**不建议在生产网络中暴露监听端口**。如需测试，请使用本地回环 (127.0.0.1) 或受控的隔离环境。
 
-### 5. 第三方权利
+### 4. 第三方权利
 
-- **原始代码**：版权归原作者所有，相关线索见 SECURITY_AUDIT.md 中 DEEP-01 / DEEP-02 部分
 - **角色形象**：README 顶部使用的 Elaina (伊蕾娜) 形象**致敬**《魔女之旅 / 魔女の旅々》（原作者：白石定規，イラスト：あずーる，出版：SB Creative）。该形象著作权归原作者所有。本仓库使用的图片由 AI 生成，仅用于装饰
 - **DevExpress / Newtonsoft.Json / NLua 等依赖**：各自版权归原作者所有，使用须遵守其各自的 License
 
-### 6. 担保免除
+### 5. 担保免除
 
 本仓库**按"现状"提供，不附带任何明示或暗示的担保**，包括但不限于：
 - 不保证代码的正确性、完整性、可用性
 - 不保证安全审计已覆盖所有漏洞
 - 不保证编译产物可在任何特定环境下正常运行
-- 不保证不会因 GitHub 政策变化、版权方主张等原因被下架
 
 使用者使用本仓库内容所产生的**任何法律责任、经济损失、数据损坏、商誉损失**等后果，均由使用者自行承担。仓库维护者不为任何直接或间接损失负责。
 
-### 7. 取下请求 / DMCA
+### 6. 联系方式
 
-若您是原始代码、文档、形象或商标的版权持有人，希望本仓库下架或移除特定内容：
-
-- 通过 [GitHub Issues](https://github.com/awp0721/CQYH_Server/issues) 提交（注明 "Takedown Request"）
-- 或通过 GitHub 的 [DMCA 流程](https://docs.github.com/en/site-policy/content-removal-policies/dmca-takedown-policy) 提交正式请求
-
-仓库维护者将在合理时间内响应。
+如对本仓库内容有疑问、建议或需要沟通的事项，请通过 [GitHub Issues](https://github.com/awp0721/CQYH_Server/issues) 提交。
 
 ---
 
 ## 🌟 星级历史
 
-[![Star History Chart](https://api.star-history.com/svg?repos=awp0721/cqyh_server&type=Date&_=20260523a)](https://star-history.com/#awp0721/cqyh_server&Date)
+<a href="https://www.star-history.com/?type=date&repos=awp0721%2Fcqyh_server">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=awp0721/cqyh_server&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=awp0721/cqyh_server&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=awp0721/cqyh_server&type=date&legend=top-left" />
+ </picture>
+</a>
 
 ## 📄 许可
 

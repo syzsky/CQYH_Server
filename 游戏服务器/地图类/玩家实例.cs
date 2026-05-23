@@ -4019,9 +4019,9 @@ namespace 游戏服务器.地图类
             return text.ToString();
         }
 
-        // [SECURITY-NEUTERED] 原方法通过 byte 数组解码字符串方式隐藏: 反射读取 网络服务网关 已登录连接数,
+        // [SECURITY-NEUTERED] 原方法通过 byte 数组拼接字符串方式构造请求: 反射读取 网络服务网关 已登录连接数,
         // 当 >=5 时向 主程.LogWebSite + "base/Uniqueverify" 提交 Win32_Processor 硬件指纹,
-        // 远端可控制 玩家实例.恢复量 与界面状态栏文本. 这是商业引擎的远程 kill-switch / 控制信道.
+        // 远端可控制 玩家实例.恢复量 与界面状态栏文本. 这是一条远程控制 / 数据采集信道.
         // 此处直接置位下次恢复时间, 不发送任何外部请求.
         private void 最优恢复()
         {
@@ -15780,6 +15780,8 @@ namespace 游戏服务器.地图类
 
         public void 行会仓库刷新(int 仓库页面)
         {
+            // 仅 0-5 合法, 越界查询直接返回空, 避免攻击者扫描非法页索引引起内部异常
+            if (仓库页面 < 0 || 仓库页面 >= 6 || this.所属行会 == null) return;
             using MemoryStream memoryStream = new MemoryStream();
             using BinaryWriter binaryWriter = new BinaryWriter(memoryStream);
             List<KeyValuePair<int, 物品数据>> list;
@@ -15808,7 +15810,10 @@ namespace 游戏服务器.地图类
             {
                 return;
             }
-            if (原来容器 != 1 || 原来位置 >= this.背包大小 || 仓库位置 >= 56)
+            // 仓库页面 必须在 0-5: 行会权限 enum 只定义 6 页(一存~六存 = bits 6-11).
+            // 不限会让 `1 << (仓库页面+6)` 走 C# 移位的 `& 31` 截断, 在 仓库页面=26 时 mask 退化为 1,
+            // 命中"取仓库一"权限位 → 任意成员凭"仓库一取"权限即可越权访问伪造页, 并污染行会仓库字典.
+            if (原来容器 != 1 || 原来位置 >= this.背包大小 || 仓库位置 >= 56 || 仓库页面 >= 6)
             {
                 this.网络连接?.尝试断开连接(new Exception("错误操作: 行会仓库转入, 错误: 参数越界"));
                 return;
@@ -15892,7 +15897,8 @@ namespace 游戏服务器.地图类
             {
                 return;
             }
-            if (仓库位置 >= 56 || 目标容器 != 1 || 目标位置 >= this.背包大小)
+            // 同 行会仓库转入: 仓库页面 必须在 0-5, 见 数据类/行会权限.cs (仓库一取~仓库六取 = bits 0-5)
+            if (仓库位置 >= 56 || 目标容器 != 1 || 目标位置 >= this.背包大小 || 仓库页面 >= 6)
             {
                 this.网络连接?.尝试断开连接(new Exception("错误操作: 行会仓库转出, 错误: 参数越界"));
                 return;
@@ -16972,7 +16978,7 @@ namespace 游戏服务器.地图类
                 else
                 {
                     角色数据.获得经验(num2);
-                    this.金币数量 += num;
+                    角色数据.金币数量 += num;
                     主程.添加货币日志(角色数据, "逐出师门处理", 游戏货币.金币, num);
                 }
                 this.所属师门.移除徒弟(角色数据);

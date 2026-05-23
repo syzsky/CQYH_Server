@@ -104,10 +104,17 @@ namespace WebApi
                                     num = Convert.ToInt32(dictionary["startWith"]);
                                     int num2;
                                     num2 = Convert.ToInt32(dictionary["endWith"]);
-                                    if (num > num2)
+                                    if (num > num2 || num < 0)
                                     {
                                         base.WriteResponse(response, "wrong range");
                                         break;
+                                    }
+                                    // 单次请求最多 1000 条; 否则即使是已签名的运营后台被滥用,
+                                    // 也能用 endWith=int.MaxValue 撑爆 List 内存并 CPU DoS.
+                                    const int 单次最大条数 = 1000;
+                                    if (num2 - num > 单次最大条数)
+                                    {
+                                        num2 = num + 单次最大条数;
                                     }
                                     List<roleInfo> list;
                                     list = new List<roleInfo>();

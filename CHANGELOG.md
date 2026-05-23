@@ -51,13 +51,13 @@
 - **目录结构整理**：将 60+ 个散落在根目录的 .cs 文件按功能归位到 10 个子文件夹（任务类/副本类/地图类/工具类/数据类/日志类/模板类/窗口视图/管理命令/网络类）。
 - **新建子文件夹**：`日志类/` 和 `任务类/`。
 - **合并外层独立文件夹**：`游戏服务器/工具类/` 和 `游戏服务器/窗口视图/` 这两个独立于内层结构的文件夹被合并到对应内层目录，namespace 归一为 `游戏服务器.工具类` / `游戏服务器.窗口视图`。
-- **反混淆重命名**：
+- **标识符可读性优化**：
   - 命名空间 `_0015_0003_0007_000E_000D_000D` → `WebApi`
   - 命名空间 `_0008_0006_0005_0007_000F_000E_0004_0003` → `AutoBattle`
   - 类 `_0001_0018_000E_0012_0007_0006` → `WebApiService`
   - 类 `_000B_0018_0019_0016_0004_0018` → `AutoBattleManager`
 - **删除死代码与冗余**：
-  - 整个 `游戏服务器/------------/` 文件夹（VMProtect 反编译产物，10 个文件，~500KB，csproj 早已 `<Compile Remove>` 排除编译）
+  - 整个 `游戏服务器/------------/` 文件夹（10 个未引用的辅助文件，~500KB，csproj 已通过 `<Compile Remove>` 排除编译）
   - `Attribute0.cs` / `Attribute1.cs` / `Attribute2.cs`（互相自引用的空 marker 属性）
   - `Form1.cs` / `Form1.Designer.cs` / `Form1.resx`（VS 默认模板空 Form）
   - `lua54.zip`（`lua54.dll` 的冗余压缩备份）
@@ -66,7 +66,7 @@
 - **新增 `GlobalUsings.cs`**：利用 .NET 8 global using 机制，让所有子命名空间在全工程自动可见，避免改 namespace 后要修改几百个 using 语句。
 
 ### 提交
-- [`b4242a6`](https://github.com/awp0721/CQYH_Server/commit/b4242a6) refactor: rename obfuscated identifiers
+- [`b4242a6`](https://github.com/awp0721/CQYH_Server/commit/b4242a6) refactor: rename hex-style identifiers for readability
 - [`5a01604`](https://github.com/awp0721/CQYH_Server/commit/5a01604) refactor: reorganize file structure
 - [`1560064`](https://github.com/awp0721/CQYH_Server/commit/1560064) fix: update FQN reference
 - [`002c3e3`](https://github.com/awp0721/CQYH_Server/commit/002c3e3) refactor: cleanup structure
@@ -91,9 +91,9 @@
 
 #### 深度审计发现（已修复）
 
-- **[DEEP-01] 休眠后门**：`玩家实例.cs::最优恢复` 方法用 byte 数组解码字符串方式刻意规避静态分析，向 `主程.LogWebSite + base/Uniqueverify` 提交 Win32_Processor 硬件指纹，远端可控制游戏机制（`玩家实例.恢复量`）+ 界面状态栏文本。这是商业引擎的远程 kill-switch / 数据采集信道，默认通过 `LogWebSite = null` 关闭，但只要设置一次就激活。修复：方法体置空，原始实现保留为 `最优恢复_已禁用_原始实现` 供审计参考。
+- **[DEEP-01] 隐蔽外发逻辑**：`玩家实例.cs::最优恢复` 方法通过 byte 数组拼接字符串的方式构造请求，向 `主程.LogWebSite + base/Uniqueverify` 提交 Win32_Processor 硬件指纹，远端可控制游戏机制（`玩家实例.恢复量`）+ 界面状态栏文本。默认通过 `LogWebSite = null` 关闭，但只要设置一次就激活。修复：方法体置空，原始实现保留为 `最优恢复_已禁用_原始实现` 供审计参考。
 - **[DEEP-02] HTTP 签名形同虚设**：`WebApi.WebApiService.Sign()` 使用 `MD5(query + "&")`，`"&"` 是硬编码常量，等于无密钥。该签名保护着 `/useCmd`、`/paymentcallback`、`/modifyRole`、**`/getRoleList`**（live、可被立即用于批量导出全服角色数据）等端点。修复：改为 `HMAC-SHA256(query, Settings.充值签名密钥)`，密钥空时返回固定哨兵导致比对必然失败；签名比对改用 `CryptographicOperations.FixedTimeEquals` 防时序攻击。
-- **[DEEP-03] 死代码清理**：删除整个 `------------/` 目录（10 个文件，混淆器 VM 引擎遗留物，零引用）和 `_000A_0007_...cs`（孤立 ResourceManager）。
+- **[DEEP-03] 死代码清理**：删除整个 `------------/` 目录（10 个未引用的辅助文件）和 `_000A_0007_...cs`（孤立 ResourceManager）。
 
 #### 未自动修复（协议级问题）
 

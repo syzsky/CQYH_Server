@@ -73,6 +73,47 @@ namespace 游戏登录器
                 return;
             }
             网络通信.连接地址 = new IPEndPoint(服务器地址, 服务器端口);
+
+            // 新功能: 密码强度实时反馈. 复用 错误提示标签 作为指示器, 提交时若有正式错误会被覆盖.
+            注册_账号密码输入框.TextChanged += 密码强度_提示;
+            修改_账号密码输入框.TextChanged += 密码强度_提示;
+        }
+
+        private void 密码强度_提示(object sender, EventArgs e)
+        {
+            string 文本;
+            UISystem.UILabel 标签;
+            if (sender == 注册_账号密码输入框)
+            {
+                文本 = 注册_账号密码输入框.Text;
+                标签 = 注册_错误提示标签;
+            }
+            else
+            {
+                文本 = 修改_账号密码输入框.Text;
+                标签 = 修改_错误提示标签;
+            }
+            if (string.IsNullOrEmpty(文本))
+            {
+                标签.Visible = false;
+                return;
+            }
+            if (文本.Length < 6)
+            {
+                标签.Text = "密码强度: 太短 (需 6-18 位)";
+                标签.ForeColor = System.Drawing.Color.Crimson;
+            }
+            else if (!是强密码(文本))
+            {
+                标签.Text = "密码强度: 弱 (建议混合字母数字符号)";
+                标签.ForeColor = System.Drawing.Color.Orange;
+            }
+            else
+            {
+                标签.Text = "密码强度: 良好";
+                标签.ForeColor = System.Drawing.Color.SeaGreen;
+            }
+            标签.Visible = true;
         }
 
 
@@ -650,7 +691,11 @@ namespace 游戏登录器
 
         private void 托盘_彻底关闭应用(object sender, EventArgs e)
         {
+            // YY: 显式 Dispose 释放 NotifyIcon 内部句柄, 避免任务栏残留与未及时 GC 的非托管资源.
             最小化到托盘.Visible = false;
+            最小化到托盘.Dispose();
+            网络通信.停止通信();
+            游戏进程?.Dispose();
             Environment.Exit(Environment.ExitCode);
         }
 

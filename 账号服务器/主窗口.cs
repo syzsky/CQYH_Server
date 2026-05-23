@@ -111,8 +111,27 @@ namespace 账号服务器
         // 大量打印封禁日志时) UI 内存无限增长 (MED-L).
         private const int 日志最大行数 = 5000;
 
+        // XX: 日志内容可能携带客户/异常消息中的控制字符 (\0 \b \r 等), 会扭曲 UI 日志显示.
+        // 入口统一净化: 保留 \t 和换行的可见效果, 删除其他控制字符, 并截到 1024 字符.
+        private static string 净化日志内容(string s)
+        {
+            if (string.IsNullOrEmpty(s)) return string.Empty;
+            if (s.Length > 1024) s = s.Substring(0, 1024);
+            StringBuilder sb = new StringBuilder(s.Length);
+            for (int i = 0; i < s.Length; i++)
+            {
+                char c = s[i];
+                if (c == '\t' || c == '\n' || c == '\r' || (c >= 0x20 && c != 0x7F))
+                {
+                    sb.Append(c);
+                }
+            }
+            return sb.ToString();
+        }
+
         public static void 添加日志(string 内容)
         {
+            string 安全内容 = 净化日志内容(内容);
             主界面?.BeginInvoke((MethodInvoker)delegate
             {
                 if (主界面.日志文本框.Lines.Length >= 日志最大行数)
@@ -122,7 +141,7 @@ namespace 账号服务器
                     Array.Copy(lines, lines.Length - kept.Length, kept, 0, kept.Length);
                     主界面.日志文本框.Lines = kept;
                 }
-                主界面.日志文本框.AppendText(内容 + "\r\n");
+                主界面.日志文本框.AppendText(安全内容 + "\r\n");
                 主界面.日志文本框.ScrollToCaret();
             });
         }
@@ -251,6 +270,7 @@ namespace 账号服务器
                 // LL: 与"结束进程"路径对齐, 先优雅关闭 UDP socket 与限速表定时器再退出.
                 网络通信.结束服务();
                 最小化到托盘.Visible = false;
+                最小化到托盘.Dispose();
                 Environment.Exit(0);
                 return;
             }
@@ -284,6 +304,7 @@ namespace 账号服务器
             {
                 网络通信.结束服务();
                 最小化到托盘.Visible = false;
+                最小化到托盘.Dispose();
                 Environment.Exit(0);
             }
         }
