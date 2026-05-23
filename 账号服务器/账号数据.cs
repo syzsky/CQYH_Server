@@ -19,6 +19,24 @@ namespace 账号服务器
 			return CryptographicOperations.FixedTimeEquals(ba, bb);
 		}
 
+		// 强密码: 必须至少包含 2 种字符类别 (小写/大写/数字/特殊).
+		// 拦掉 "123456" "abcdef" "ABCDEF" 这类极弱口令 (MISC-02).
+		public static bool 是强密码(string pwd)
+		{
+			if (string.IsNullOrEmpty(pwd)) return false;
+			int 类别 = 0;
+			bool 有小写 = false, 有大写 = false, 有数字 = false, 有特殊 = false;
+			foreach (char c in pwd)
+			{
+				if (!有小写 && c >= 'a' && c <= 'z') { 有小写 = true; 类别++; }
+				else if (!有大写 && c >= 'A' && c <= 'Z') { 有大写 = true; 类别++; }
+				else if (!有数字 && c >= '0' && c <= '9') { 有数字 = true; 类别++; }
+				else if (!有特殊 && !char.IsLetterOrDigit(c)) { 有特殊 = true; 类别++; }
+				if (类别 >= 2) return true;
+			}
+			return false;
+		}
+
 		private static char[] RandomChars = new char[62]
 		{
 		'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
@@ -42,12 +60,11 @@ namespace 账号服务器
 
 		public static string 生成门票()
 		{
-			byte[] buf = new byte[32];
-			安全随机.GetBytes(buf);
+			// 用 GetInt32 做拒绝-重抽, 消除 256 % 62 = 8 带来的模偏置 (LOW-M).
 			char[] chars = new char[32];
 			for (int i = 0; i < 32; i++)
 			{
-				chars[i] = RandomChars[buf[i] % RandomChars.Length];
+				chars[i] = RandomChars[RandomNumberGenerator.GetInt32(0, RandomChars.Length)];
 			}
 			return "ULS21-" + new string(chars);
 		}

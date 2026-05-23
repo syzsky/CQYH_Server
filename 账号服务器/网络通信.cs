@@ -22,7 +22,7 @@ namespace 账号服务器
 
 		public static ConcurrentQueue<数据封包> 数据处理队列;
 
-		// 每 IP 限速桶, 同时承载认证失败计数与注册次数计数.
+		// 每 IP 限速桶, 同时承载认证失败计数 / 注册次数 / 解析错误日志去抖.
 		private sealed class 限速桶
 		{
 			public int 失败计数;
@@ -30,7 +30,11 @@ namespace 账号服务器
 			public DateTime 解封时间;
 			public int 注册计数;
 			public DateTime 注册窗口起点;
+			public DateTime 上次解析错误日志时间;
 		}
+
+		// MISC-04: 同一 IP 的解析错误日志, 60 秒内最多记一条, 防止伪造 IP 灌脏包刷爆日志.
+		private const int 解析错误日志间隔秒 = 60;
 
 		private static readonly ConcurrentDictionary<IPAddress, 限速桶> 限速表
 			= new ConcurrentDictionary<IPAddress, 限速桶>();
@@ -44,13 +48,57 @@ namespace 账号服务器
 		private const int 注册窗口秒数 = 300;
 		private const int 注册最大次数 = 3;
 
+		// 限速表硬上限: UDP 源 IP 可伪造, 不设上界会被反射 DoS 撑爆内存.
+		// 50k 桶 ≈ 4MB, 足够正常负载, 超额时拒绝新桶 (相当于全局 fail-closed).
+		private const int 限速表上限 = 50_000;
+		private static Timer 限速表清理定时器;
+
 		private static 限速桶 取桶(IPAddress ip)
 		{
+			if (限速表.TryGetValue(ip, out var 已有桶))
+			{
+				return 已有桶;
+			}
+			// 超过硬上限直接复用一个"全局桶"语义: 拒绝新建,
+			// 由 是否被封禁 等调用方默认放行该 IP, 而非误封. 受害方向: 攻击者刷不
+			// 出新条目 + 已有正常用户不受影响; 但失败计数不再生效 — 这是
+			// 内存安全和限速效力的权衡, 优先保进程存活.
+			if (限速表.Count >= 限速表上限)
+			{
+				return new 限速桶
+				{
+					失败窗口起点 = DateTime.UtcNow,
+					注册窗口起点 = DateTime.UtcNow
+				};
+			}
 			return 限速表.GetOrAdd(ip, _ => new 限速桶
 			{
 				失败窗口起点 = DateTime.UtcNow,
 				注册窗口起点 = DateTime.UtcNow
 			});
+		}
+
+		// 每 5 分钟扫一遍, 清理"窗口过期 且 未在封禁期" 的桶, 防止 IP 伪造引起的
+		// 内存无界增长 (HIGH-I).
+		private static void 清理限速表(object _)
+		{
+			DateTime now = DateTime.UtcNow;
+			foreach (var kv in 限速表)
+			{
+				限速桶 桶 = kv.Value;
+				bool 可丢弃;
+				lock (桶)
+				{
+					可丢弃 = now >= 桶.解封时间
+						&& (now - 桶.失败窗口起点).TotalSeconds > 失败窗口秒数
+						&& (now - 桶.注册窗口起点).TotalSeconds > 注册窗口秒数;
+				}
+				if (可丢弃)
+				{
+					((System.Collections.Generic.ICollection<System.Collections.Generic.KeyValuePair<IPAddress, 限速桶>>)限速表)
+						.Remove(kv);
+				}
+			}
 		}
 
 		private static bool 是否被封禁(IPAddress ip)
@@ -88,6 +136,21 @@ namespace 账号服务器
 			}
 		}
 
+		private static bool 应记录解析错误(IPAddress ip)
+		{
+			限速桶 桶 = 取桶(ip);
+			lock (桶)
+			{
+				DateTime now = DateTime.UtcNow;
+				if ((now - 桶.上次解析错误日志时间).TotalSeconds < 解析错误日志间隔秒)
+				{
+					return false;
+				}
+				桶.上次解析错误日志时间 = now;
+				return true;
+			}
+		}
+
 		private static bool 注册放行(IPAddress ip)
 		{
 			限速桶 桶 = 取桶(ip);
@@ -114,6 +177,8 @@ namespace 账号服务器
 			{
 				本地网络服务 = new UdpClient(new IPEndPoint(IPAddress.Any, (ushort)主窗口.主界面.本地监听端口.Value));
 				数据处理队列 = new ConcurrentQueue<数据封包>();
+				限速表清理定时器 = new Timer(清理限速表, null,
+					TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(5));
 				Task.Run(delegate
 				{
 					while (本地网络服务 != null)
@@ -135,7 +200,10 @@ namespace 账号服务器
 								item.接收数据 = udpClient.Receive(ref item.客户地址);
 								if (item.接收数据.Length > 1024)
 								{
-									主窗口.添加日志($"收到过长的封包  地址:{item.客户地址}, 长度:{item.接收数据.Length}");
+									if (应记录解析错误(item.客户地址.Address))
+									{
+										主窗口.添加日志($"收到过长的封包  地址:{item.客户地址}, 长度:{item.接收数据.Length}");
+									}
 								}
 								else
 								{
@@ -167,7 +235,10 @@ namespace 账号服务器
 								string[] array = Encoding.UTF8.GetString(result.接收数据, 0, result.接收数据.Length).Split(new char[1] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 								if (array.Length <= 3 || !int.TryParse(array[0], out var _))
 								{
-									主窗口.添加日志($"收到错误的封包  地址: {result.客户地址}, 长度: {result.接收数据.Length}");
+									if (应记录解析错误(result.客户地址.Address))
+									{
+										主窗口.添加日志($"收到错误的封包  地址: {result.客户地址}, 长度: {result.接收数据.Length}");
+									}
 								}
 								else if (是否被封禁(result.客户地址.Address))
 								{
@@ -190,7 +261,8 @@ namespace 账号服务器
 												else
 												{
 													记录认证成功(result.客户地址.Address);
-													发送数据(result.客户地址, Encoding.UTF8.GetBytes(array[0] + " 0 " + array[2] + " " + array[3] + " " + 主窗口.游戏区服));
+													// MED-E: 不再回显密码, 客户端保留输入框输入即可.
+													发送数据(result.客户地址, Encoding.UTF8.GetBytes(array[0] + " 0 " + array[2] + " " + 主窗口.游戏区服));
 													主窗口.添加日志("账号登录成功!  账号: " + array[2]);
 												}
 											}
@@ -209,6 +281,10 @@ namespace 账号服务器
 												else if (array[3].Length <= 5 || array[3].Length > 18)
 												{
 													发送数据(result.客户地址, Encoding.UTF8.GetBytes(array[0] + " 3 密码长度错误"));
+												}
+												else if (!账号数据.是强密码(array[3]))
+												{
+													发送数据(result.客户地址, Encoding.UTF8.GetBytes(array[0] + " 3 密码须含至少 2 种字符类型 (字母/数字/符号)"));
 												}
 												else if (array[4].Length <= 1 || array[4].Length > 18)
 												{
@@ -230,10 +306,15 @@ namespace 账号服务器
 												{
 													发送数据(result.客户地址, Encoding.UTF8.GetBytes("3 用户名已经存在"));
 												}
+												else if (!主窗口.写盘许可())
+												{
+													发送数据(result.客户地址, Encoding.UTF8.GetBytes(array[0] + " 3 服务器繁忙, 请稍后再试"));
+												}
 												else
 												{
 													主窗口.添加账号(new 账号数据(array[2], array[3], array[4], array[5]));
-													发送数据(result.客户地址, Encoding.UTF8.GetBytes(array[0] + " 2 " + array[2] + " " + array[3]));
+													// MED-E: 不再回显密码, 客户端从输入框自取.
+													发送数据(result.客户地址, Encoding.UTF8.GetBytes(array[0] + " 2 " + array[2]));
 													主窗口.添加日志("账号注册成功!  账号: " + array[2]);
 													Interlocked.Increment(ref 主窗口.新注册账号数);
 													主窗口.更新已注册账号数();
@@ -247,6 +328,10 @@ namespace 账号服务器
 												{
 													发送数据(result.客户地址, Encoding.UTF8.GetBytes(array[0] + " 5 密码长度错误"));
 												}
+												else if (!账号数据.是强密码(array[3]))
+												{
+													发送数据(result.客户地址, Encoding.UTF8.GetBytes(array[0] + " 5 密码须含至少 2 种字符类型 (字母/数字/符号)"));
+												}
 												else
 												{
 													// 统一错误文案, 防止通过差异化错误枚举有效账号 (HIGH-A)
@@ -258,6 +343,10 @@ namespace 账号服务器
 													{
 														记录认证失败(result.客户地址.Address);
 														发送数据(result.客户地址, Encoding.UTF8.GetBytes(array[0] + " 5 密保信息错误"));
+													}
+													else if (!主窗口.写盘许可())
+													{
+														发送数据(result.客户地址, Encoding.UTF8.GetBytes(array[0] + " 5 服务器繁忙, 请稍后再试"));
 													}
 													else
 													{
@@ -290,7 +379,8 @@ namespace 账号服务器
 													记录认证成功(result.客户地址.Address);
 													string text = 账号数据.生成门票();
 													发送门票(value2, text, array[2]);
-													发送数据(result.客户地址, Encoding.UTF8.GetBytes(array[0] + " 6 " + array[2] + " " + array[3] + " " + text));
+													// MED-E: 不再回显密码, 仅返回账号与门票.
+													发送数据(result.客户地址, Encoding.UTF8.GetBytes(array[0] + " 6 " + array[2] + " " + text));
 													主窗口.添加日志("成功生成门票!  账号: " + array[2] + " - " + text);
 													Interlocked.Increment(ref 主窗口.生成门票总数);
 													主窗口.更新已生成门票数();
@@ -298,7 +388,10 @@ namespace 账号服务器
 											}
 											break;
 										default:
-											主窗口.添加日志($"收到未定义的封包  地址: {result.客户地址}, 长度: {result.接收数据.Length}");
+											if (应记录解析错误(result.客户地址.Address))
+											{
+												主窗口.添加日志($"收到未定义的封包  地址: {result.客户地址}, 长度: {result.接收数据.Length}");
+											}
 											break;
 									}
 								}
@@ -326,6 +419,8 @@ namespace 账号服务器
 		{
 			本地网络服务?.Close();
 			本地网络服务 = null;
+			限速表清理定时器?.Dispose();
+			限速表清理定时器 = null;
 		}
 
 		public static void 发送数据(IPEndPoint 地址, byte[] 数据)

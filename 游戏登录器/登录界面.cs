@@ -33,9 +33,12 @@ namespace 游戏登录器
             用户界面 = this;
             网络通信.开始通信();
             游戏区服 = new Dictionary<string, IPEndPoint>();
-            启动_选中区服标签.Text = 是合法区服名(Settings.Default.保存区服) ? Settings.Default.保存区服 : "";
+            // Settings 中的账号 / 区服字段经 DPAPI 加密保存; 老明文格式继续兼容读取.
+            string 解密账号 = 解密本地字符串(Settings.Default.保存账号);
+            string 解密区服 = 解密本地字符串(Settings.Default.保存区服);
+            启动_选中区服标签.Text = 是合法区服名(解密区服) ? 解密区服 : "";
             // 持久化账号字段也可能被外部篡改，启动时做一次健壮性过滤
-            登录_账号名字输入框.Text = 是合法用户输入(Settings.Default.保存账号, 32) ? Settings.Default.保存账号 : "";
+            登录_账号名字输入框.Text = 是合法用户输入(解密账号, 32) ? 解密账号 : "";
             if (!File.Exists(".\\Binaries\\Win32\\MMOGame-Win32-Shipping.exe"))
             {
                 MessageBox.Show("未找到游戏路径, 请确认登录器位置");
@@ -81,6 +84,90 @@ namespace 游戏登录器
             修改_错误提示标签.Visible = false;
         }
 
+        // 协议 v2: 密码字段在传输前先 hash, 避免端到端明文密码 + 服务端不必持有可逆密码.
+        // 域分隔字符串 "YH-Auth-v2" 防止跨用途碰撞 (如签名/HMAC 复用同口令).
+        // 服务端: 见 账号服务器/网络通信.cs 同名实现, 两端必须保持一致.
+        public static string 密码哈希(string 账号, string 明文密码)
+        {
+            byte[] bytes = Encoding.UTF8.GetBytes("YH-Auth-v2:" + 账号 + ":" + 明文密码);
+            byte[] hash = SHA256.HashData(bytes);
+            StringBuilder sb = new StringBuilder(hash.Length * 2);
+            for (int i = 0; i < hash.Length; i++)
+            {
+                sb.Append(hash[i].ToString("x2"));
+            }
+            return sb.ToString();
+        }
+
+        // 服务端响应的密码字段在 v2 下必然是 64 char 小写 hex
+        private static bool 是合法密码哈希(string s)
+        {
+            if (string.IsNullOrEmpty(s) || s.Length != 64)
+            {
+                return false;
+            }
+            for (int i = 0; i < s.Length; i++)
+            {
+                char c = s[i];
+                bool ok = (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f');
+                if (!ok)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        // DPAPI 包装: 当前用户作用域加密 Settings 中的敏感字段 (账号名).
+        // base64(0x01 || ciphertext) 与原明文 (无 0x01 前缀) 区分, 实现旧明文向密文的兼容读取.
+        private const byte DPAPI头标记 = 0x01;
+
+        public static string 加密本地字符串(string 明文)
+        {
+            if (string.IsNullOrEmpty(明文))
+            {
+                return string.Empty;
+            }
+            try
+            {
+                byte[] data = Encoding.UTF8.GetBytes(明文);
+                byte[] enc = ProtectedData.Protect(data, null, DataProtectionScope.CurrentUser);
+                byte[] withMarker = new byte[enc.Length + 1];
+                withMarker[0] = DPAPI头标记;
+                Buffer.BlockCopy(enc, 0, withMarker, 1, enc.Length);
+                return Convert.ToBase64String(withMarker);
+            }
+            catch
+            {
+                // DPAPI 在罕见环境下不可用 — 退回明文, 不阻塞登录流程
+                return 明文;
+            }
+        }
+
+        public static string 解密本地字符串(string 存储值)
+        {
+            if (string.IsNullOrEmpty(存储值))
+            {
+                return string.Empty;
+            }
+            try
+            {
+                byte[] decoded = Convert.FromBase64String(存储值);
+                if (decoded.Length > 0 && decoded[0] == DPAPI头标记)
+                {
+                    byte[] cipher = new byte[decoded.Length - 1];
+                    Buffer.BlockCopy(decoded, 1, cipher, 0, cipher.Length);
+                    byte[] plain = ProtectedData.Unprotect(cipher, null, DataProtectionScope.CurrentUser);
+                    return Encoding.UTF8.GetString(plain);
+                }
+            }
+            catch
+            {
+                // base64 解析失败或 DPAPI 解密失败 — 当作旧明文处理
+            }
+            return 存储值;
+        }
+
         // 启动游戏前对游戏可执行文件做 Authenticode 弱模式校验：
         // - 未签名 → 跳过（兼容未签名的开发构建，fail-open）
         // - 已签名但链不合法 → 询问用户是否继续
@@ -118,6 +205,14 @@ namespace 游戏登录器
                 // 校验过程意外错误不阻塞启动，仅当签名明确无效时才提示
                 return true;
             }
+        }
+
+        // 包号: 之前 ++封包编号 从 0 起顺序递增, 可被预测; 改为每次发包前生成 [1, int.MaxValue) 随机数.
+        // 服务端原样回显, 客户端 数据接收处理 用 == 校验, 不需要服务端改动.
+        private static int 下一包号()
+        {
+            封包编号 = RandomNumberGenerator.GetInt32(1, int.MaxValue);
+            return 封包编号;
         }
 
         // 限制账号/密码这类用户输入：去掉控制字符与协议分隔符（空格），限制最大长度
@@ -237,9 +332,9 @@ namespace 游戏登录器
                             break;
                         }
                         用户界面解锁(null, null);
-                        // 不信任服务器回显：账号/密码字段必须满足客户端字符集与长度约束，
+                        // 不信任服务器回显：账号必须合法、回显的密码字段必须是 64-char hex 哈希,
                         // 否则后续会被拼进进入游戏的请求包里把脏字符塞出去
-                        if (!是合法用户输入(array[2], 32) || !是合法用户输入(array[3], 32))
+                        if (!是合法用户输入(array[2], 32) || !是合法密码哈希(array[3]))
                         {
                             登录_错误提示标签.Text = "服务器响应格式异常";
                             登录_错误提示标签.Visible = true;
@@ -266,8 +361,8 @@ namespace 游戏登录器
                             启动_选择游戏区服.Items.Add(array3[2]);
                         }
                         主选项卡.SelectedIndex = 3;
-                        // 保存本地输入框的账号而非服务器回显，避免 MITM 篡改回显毒化本地配置
-                        Settings.Default.保存账号 = 登录_账号名字输入框.Text;
+                        // 保存本地输入框的账号而非服务器回显, 并通过 DPAPI 加密
+                        Settings.Default.保存账号 = 加密本地字符串(登录_账号名字输入框.Text);
                         Settings.Default.Save();
                         break;
                     }
@@ -342,7 +437,7 @@ namespace 游戏登录器
                             string 区服名 = 启动_选中区服标签.Text;
                             string 票据 = array[4];
                             string arguments = "-wegame=" + $"1,1,{value.Address},{value.Port}," + $"1,1,{value.Address},{value.Port}," + 区服名 + "  " + $"/ip:1,1,{value.Address} " + $"/port:{value.Port} " + "/ticket:" + 票据 + " /AreaName:" + 区服名;
-                            Settings.Default.保存区服 = 区服名;
+                            Settings.Default.保存区服 = 加密本地字符串(区服名);
                             Settings.Default.Save();
                             游戏进程 = new Process();
                             游戏进程.StartInfo.FileName = 游戏路径;
@@ -426,7 +521,8 @@ namespace 游戏登录器
                 登录_错误提示标签.Visible = true;
                 return;
             }
-            if (网络通信.发送数据(Encoding.UTF8.GetBytes($"{++封包编号} 0 " + 登录_账号名字输入框.Text + " " + 登录_账号密码输入框.Text)))
+            string 登录_密码哈希 = 密码哈希(登录_账号名字输入框.Text, 登录_账号密码输入框.Text);
+            if (网络通信.发送数据(Encoding.UTF8.GetBytes($"{下一包号()} 0 " + 登录_账号名字输入框.Text + " " + 登录_密码哈希)))
             {
                 用户界面锁定();
             }
@@ -593,7 +689,8 @@ namespace 游戏登录器
                 注册_错误提示标签.Visible = true;
                 return;
             }
-            if (网络通信.发送数据(Encoding.UTF8.GetBytes($"{++封包编号} 1 " + 注册_账号名字输入框.Text + " " + 注册_账号密码输入框.Text + " " + 注册_密保问题输入框.Text + " " + 注册_密保答案输入框.Text)))
+            string 注册_密码哈希 = 密码哈希(注册_账号名字输入框.Text, 注册_账号密码输入框.Text);
+            if (网络通信.发送数据(Encoding.UTF8.GetBytes($"{下一包号()} 1 " + 注册_账号名字输入框.Text + " " + 注册_密码哈希 + " " + 注册_密保问题输入框.Text + " " + 注册_密保答案输入框.Text)))
             {
                 用户界面锁定();
             }
@@ -671,7 +768,8 @@ namespace 游戏登录器
                 修改_错误提示标签.Visible = true;
                 return;
             }
-            if (网络通信.发送数据(Encoding.UTF8.GetBytes($"{++封包编号} 2 " + 修改_账号名字输入框.Text + " " + 修改_账号密码输入框.Text + " " + 修改_密保问题输入框.Text + " " + 修改_密保答案输入框.Text)))
+            string 修改_密码哈希 = 密码哈希(修改_账号名字输入框.Text, 修改_账号密码输入框.Text);
+            if (网络通信.发送数据(Encoding.UTF8.GetBytes($"{下一包号()} 2 " + 修改_账号名字输入框.Text + " " + 修改_密码哈希 + " " + 修改_密保问题输入框.Text + " " + 修改_密保答案输入框.Text)))
             {
                 用户界面锁定();
             }
@@ -698,7 +796,7 @@ namespace 游戏登录器
             {
                 MessageBox.Show("服务器选择错误");
             }
-            else if (网络通信.发送数据(Encoding.UTF8.GetBytes($"{++封包编号} 3 " + 登录账号 + " " + 登录密码 + " " + 启动_选中区服标签.Text + " v1.0")))
+            else if (网络通信.发送数据(Encoding.UTF8.GetBytes($"{下一包号()} 3 " + 登录账号 + " " + 登录密码 + " " + 启动_选中区服标签.Text + " v1.0")))
             {
                 用户界面锁定();
                 用户界面计时.Enabled = true;

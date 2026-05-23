@@ -92,10 +92,21 @@ namespace 账号服务器
             });
         }
 
+        // 日志文本框 行数上限. 超过后丢弃前一半, 防止长时间运行(尤其遭遇 IP 伪造攻击
+        // 大量打印封禁日志时) UI 内存无限增长 (MED-L).
+        private const int 日志最大行数 = 5000;
+
         public static void 添加日志(string 内容)
         {
             主界面?.BeginInvoke((MethodInvoker)delegate
             {
+                if (主界面.日志文本框.Lines.Length >= 日志最大行数)
+                {
+                    string[] lines = 主界面.日志文本框.Lines;
+                    string[] kept = new string[lines.Length / 2];
+                    Array.Copy(lines, lines.Length - kept.Length, kept, 0, kept.Length);
+                    主界面.日志文本框.Lines = kept;
+                }
                 主界面.日志文本框.AppendText(内容 + "\r\n");
                 主界面.日志文本框.ScrollToCaret();
             });
@@ -107,6 +118,29 @@ namespace 账号服务器
             if (账号数据.TryAdd(账号.账号名字, 账号))
             {
                 保存账号(账号);
+            }
+        }
+
+        // 全局写盘节流: 每秒最多 20 次磁盘写入, 防止伪造 IP 绕过 per-IP 注册限速
+        // 后对磁盘形成 IO 放大攻击 (MED-K). 超额请求需要等待或被上层拒绝.
+        private const int 写盘每秒上限 = 20;
+        private static readonly object 写盘节流锁 = new object();
+        private static DateTime 写盘窗口起点 = DateTime.UtcNow;
+        private static int 写盘窗口计数 = 0;
+
+        public static bool 写盘许可()
+        {
+            lock (写盘节流锁)
+            {
+                DateTime now = DateTime.UtcNow;
+                if ((now - 写盘窗口起点).TotalSeconds >= 1.0)
+                {
+                    写盘窗口起点 = now;
+                    写盘窗口计数 = 0;
+                }
+                if (写盘窗口计数 >= 写盘每秒上限) return false;
+                写盘窗口计数++;
+                return true;
             }
         }
 

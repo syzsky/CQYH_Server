@@ -10573,6 +10573,10 @@ namespace 游戏服务器.地图类
 
         public bool 根据物品编号获得货币(int 编号, int 数量)
         {
+            if (数量 <= 0)
+            {
+                return false;
+            }
             switch (编号)
             {
                 case 1:
@@ -15784,6 +15788,11 @@ namespace 游戏服务器.地图类
             {
                 return;
             }
+            if (原来容器 != 1 || 原来位置 >= this.背包大小 || 仓库位置 >= 56)
+            {
+                this.网络连接?.尝试断开连接(new Exception("错误操作: 行会仓库转入, 错误: 参数越界"));
+                return;
+            }
             if (this.对话守卫 != null && this.当前地图 == this.对话守卫.当前地图 && base.网格距离(this.对话守卫.当前坐标) <= 12)
             {
                 int num;
@@ -15861,6 +15870,11 @@ namespace 游戏服务器.地图类
         {
             if (this.所属行会 == null)
             {
+                return;
+            }
+            if (仓库位置 >= 56 || 目标容器 != 1 || 目标位置 >= this.背包大小)
+            {
+                this.网络连接?.尝试断开连接(new Exception("错误操作: 行会仓库转出, 错误: 参数越界"));
                 return;
             }
             if (this.对话守卫 != null && this.当前地图 == this.对话守卫.当前地图 && base.网格距离(this.对话守卫.当前坐标) <= 12)
@@ -20186,6 +20200,10 @@ namespace 游戏服务器.地图类
 
         public void 寄售上架物品(byte 背包类型, byte 背包位置, byte 时间类型, int 上架价格)
         {
+            if (this.对象死亡 || this.摆摊状态 > 0 || this.交易状态 >= 3)
+            {
+                return;
+            }
             物品数据 物品数据;
             物品数据 = null;
             字典监视器<byte, 物品数据> 字典监视器;
@@ -20207,21 +20225,39 @@ namespace 游戏服务器.地图类
                 return;
             }
             物品数据 = (字典监视器.TryGetValue(背包位置, out var v) ? v : null);
+            if (物品数据 == null)
+            {
+                return;
+            }
             if (物品数据.是否上锁)
             {
                 base.发送封包(new 游戏错误提示
                 {
                     错误代码 = 1890
                 });
+                return;
             }
-            else if (游戏数据网关.寄售数据表.数据表.Where((KeyValuePair<int, 游戏数据> x) => x.Value is 寄售数据 寄售数据 && 寄售数据.卖家编号 == this.地图编号).Count() >= 5)
+            if (物品数据.是否绑定 || (物品数据 is 装备数据 装备数据 && 装备数据.灵魂绑定.V))
+            {
+                base.发送封包(new 游戏错误提示
+                {
+                    错误代码 = 1804
+                });
+                return;
+            }
+            if (上架价格 < 1 || 上架价格 > 1000000000 || 时间类型 < 1 || 时间类型 > 3)
+            {
+                this.网络连接?.尝试断开连接(new Exception("错误操作: 寄售上架物品, 错误: 参数非法"));
+                return;
+            }
+            if (游戏数据网关.寄售数据表.数据表.Where((KeyValuePair<int, 游戏数据> x) => x.Value is 寄售数据 寄售数据 && 寄售数据.卖家编号 == this.地图编号).Count() >= 5)
             {
                 base.发送封包(new 游戏错误提示
                 {
                     错误代码 = 12808
                 });
             }
-            else if (物品数据 != null && 时间类型 >= 1 && 时间类型 <= 3 && 上架价格 >= 1)
+            else
             {
                 int 限制时间;
                 限制时间 = 时间类型 switch
