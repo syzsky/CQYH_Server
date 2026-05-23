@@ -7,6 +7,7 @@ using System.Drawing;
 using System.IO;
 using System.Net;
 using System.Text;
+using System.Threading;
 using System.Windows.Forms;
 using 账号服务器.Properties;
 
@@ -76,8 +77,18 @@ namespace 账号服务器
             });
         }
 
+        // DD: 字节数更新走 UDP 热路径, 每包调用 BeginInvoke 会让 UI 消息队列在洪水攻击下堆积爆炸.
+        // 节流到 100ms 一次, 数值本身仍每包累加, 仅刷新频率受限.
+        private static long 已接收字节上次刷新Ticks;
+        private static long 已发送字节上次刷新Ticks;
+        private const long 字节数刷新间隔Ticks = 100 * TimeSpan.TicksPerMillisecond;
+
         public static void 更新已接收字节数()
         {
+            long now = DateTime.UtcNow.Ticks;
+            long prev = Interlocked.Read(ref 已接收字节上次刷新Ticks);
+            if (now - prev < 字节数刷新间隔Ticks) return;
+            if (Interlocked.CompareExchange(ref 已接收字节上次刷新Ticks, now, prev) != prev) return;
             主界面?.BeginInvoke((MethodInvoker)delegate
             {
                 主界面.已接收字节.Text = $"已接收字节: {已接收字节数}";
@@ -86,6 +97,10 @@ namespace 账号服务器
 
         public static void 更新已发送字节数()
         {
+            long now = DateTime.UtcNow.Ticks;
+            long prev = Interlocked.Read(ref 已发送字节上次刷新Ticks);
+            if (now - prev < 字节数刷新间隔Ticks) return;
+            if (Interlocked.CompareExchange(ref 已发送字节上次刷新Ticks, now, prev) != prev) return;
             主界面?.BeginInvoke((MethodInvoker)delegate
             {
                 主界面.已发送字节.Text = $"已发送字节: {已发送字节数}";

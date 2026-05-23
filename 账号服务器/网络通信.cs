@@ -53,6 +53,10 @@ namespace 账号服务器
 		private const int 限速表上限 = 50_000;
 		private static Timer 限速表清理定时器;
 
+		// II: 处理队列上限. UDP 洪水使接收速率 > 处理速率, 不设上界会让 ConcurrentQueue 无限增长 → OOM.
+		// 10000 个上限 ≈ 最坏 10MB (单包 1024 字节), 足够正常突发, 又能挡住洪水撑爆.
+		private const int 数据处理队列上限 = 10_000;
+
 		private static 限速桶 取桶(IPAddress ip)
 		{
 			if (限速表.TryGetValue(ip, out var 已有桶))
@@ -205,7 +209,15 @@ namespace 账号服务器
 										主窗口.添加日志($"收到过长的封包  地址:{item.客户地址}, 长度:{item.接收数据.Length}");
 									}
 								}
-								else
+								else if (数据处理队列.Count >= 数据处理队列上限)
+								{
+									// II: 队列上限, 防止接收速率 > 处理速率时无界增长导致 OOM
+									if (应记录解析错误(item.客户地址.Address))
+									{
+										主窗口.添加日志("处理队列拥塞, 丢包来源: " + item.客户地址);
+									}
+								}
+							else
 								{
 									数据处理队列.Enqueue(item);
 									Interlocked.Add(ref 主窗口.已接收字节数, item.接收数据.Length);

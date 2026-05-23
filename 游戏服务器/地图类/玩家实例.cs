@@ -6572,6 +6572,10 @@ namespace 游戏服务器.地图类
 
         public void 消耗背包物品(int 消耗总数, 物品数据 当前物品, string 日志 = "")
         {
+            if (消耗总数 <= 0 || 当前物品 == null)
+            {
+                return;
+            }
             if ((当前物品.当前持久.V -= 消耗总数) <= 0)
             {
                 this.网络连接?.发送封包(new 删除玩家物品
@@ -6634,6 +6638,10 @@ namespace 游戏服务器.地图类
 
         public void 拿走背包物品(int 消耗总数, 物品数据 当前物品, string 日志 = "")
         {
+            if (消耗总数 <= 0 || 当前物品 == null)
+            {
+                return;
+            }
             if (当前物品.持久类型 != 物品持久分类.堆叠)
             {
                 this.网络连接?.发送封包(new 删除玩家物品
@@ -20103,31 +20111,56 @@ namespace 游戏服务器.地图类
 
         public void 传送任务点(int questId)
         {
+            if (this.对象死亡 || this.摆摊状态 > 0 || this.交易状态 >= 3)
+            {
+                return;
+            }
             switch (questId)
             {
                 case 1481:
-                    this.玩家切换地图(143, 1139, 668, 0);
-                    return;
                 case 1901:
-                    this.玩家切换地图(145, 867, 320, 0);
-                    return;
                 case 1903:
-                    this.玩家切换地图(147, 1097, 462, 0);
-                    return;
                 case 1906:
-                    this.玩家切换地图(154, 1048, 348, 0);
-                    return;
                 case 1907:
-                    this.玩家切换地图(154, 963, 413, 0);
-                    return;
                 case 1904:
                 case 1905:
-                    this.玩家切换地图(144, 1031, 207, 0);
-                    return;
                 case 1561:
                 case 1902:
-                    this.玩家切换地图(145, 1077, 582, 0);
+                {
+                    CharacterQuest cq;
+                    cq = this.角色数据.Quests.Where((CharacterQuest x) => x.Info.V.Id == questId).FirstOrDefault();
+                    if (cq == null || cq.CompleteDate.V != DateTime.MinValue)
+                    {
+                        return;
+                    }
+                    switch (questId)
+                    {
+                        case 1481:
+                            this.玩家切换地图(143, 1139, 668, 0);
+                            return;
+                        case 1901:
+                            this.玩家切换地图(145, 867, 320, 0);
+                            return;
+                        case 1903:
+                            this.玩家切换地图(147, 1097, 462, 0);
+                            return;
+                        case 1906:
+                            this.玩家切换地图(154, 1048, 348, 0);
+                            return;
+                        case 1907:
+                            this.玩家切换地图(154, 963, 413, 0);
+                            return;
+                        case 1904:
+                        case 1905:
+                            this.玩家切换地图(144, 1031, 207, 0);
+                            return;
+                        case 1561:
+                        case 1902:
+                            this.玩家切换地图(145, 1077, 582, 0);
+                            return;
+                    }
                     return;
+                }
             }
             if (!GameQuests.数据表.TryGetValue(questId, out var questInfo) || (!questInfo.CanTeleport && questInfo.TeleportCostId == 0))
             {

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -428,6 +428,7 @@ namespace 游戏服务器.网络类
             if (当前阶段 != 游戏阶段.正在游戏)
             {
                 尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{当前阶段}"));
+                return;
             }
             else
             {
@@ -443,6 +444,7 @@ namespace 游戏服务器.网络类
             if (当前阶段 != 游戏阶段.正在游戏)
             {
                 尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{当前阶段}"));
+                return;
             }
             else
             {
@@ -455,6 +457,7 @@ namespace 游戏服务器.网络类
             if (当前阶段 != 游戏阶段.正在游戏)
             {
                 尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{当前阶段}"));
+                return;
             }
             else
             {
@@ -466,6 +469,7 @@ namespace 游戏服务器.网络类
             if (当前阶段 != 游戏阶段.正在游戏)
             {
                 尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{当前阶段}"));
+                return;
             }
             else
             {
@@ -473,43 +477,52 @@ namespace 游戏服务器.网络类
             }
         }
         #endregion
+        // PROTO-04: 以下处理器原本完全无阶段守卫, 统一加 阶段+绑定角色 检查
         public void 处理封包(任务传送封包 P)
         {
+            if (this.当前阶段 != 游戏阶段.正在游戏 || this.绑定角色 == null) return;
             this.绑定角色.传送任务点(P.任务编号);
         }
 
         public void 处理封包(普通升级取回 P)
         {
+            if (this.当前阶段 != 游戏阶段.正在游戏 || this.绑定角色 == null) return;
             this.绑定角色.玩家取回装备(0);
         }
 
         public void 处理封包(普通快速取回 P)
         {
+            if (this.当前阶段 != 游戏阶段.正在游戏 || this.绑定角色 == null) return;
             this.绑定角色.玩家取回装备(100000);
         }
 
         public void 处理封包(高级升级取回 P)
         {
+            if (this.当前阶段 != 游戏阶段.正在游戏 || this.绑定角色 == null) return;
             this.绑定角色.玩家取回装备(0);
         }
 
         public void 处理封包(高级快速取回 P)
         {
+            if (this.当前阶段 != 游戏阶段.正在游戏 || this.绑定角色 == null) return;
             this.绑定角色.玩家取回装备(100000);
         }
 
         public void 处理封包(装备铭文刻印 P)
         {
+            if (this.当前阶段 != 游戏阶段.正在游戏 || this.绑定角色 == null) return;
             this.绑定角色.玩家铭文刻印(P.装备部位, P.物品编号, P.铭文索引);
         }
 
         public void 处理封包(角色外观易容 P)
         {
+            if (this.当前阶段 != 游戏阶段.正在游戏 || this.绑定角色 == null) return;
             this.绑定角色.玩家外观易容(P.角色发型, P.角色发色, P.角色脸型, P.未知参数);
         }
 
         public void 处理封包(玩家合无相石 P)
         {
+            if (this.当前阶段 != 游戏阶段.正在游戏 || this.绑定角色 == null) return;
             this.绑定角色.玩家合无相石((byte)P.物品位置, P.一键合成 == 1);
         }
 
@@ -539,6 +552,7 @@ namespace 游戏服务器.网络类
 
         public void 处理封包(请求武技签到 P)
         {
+            if (this.当前阶段 != 游戏阶段.正在游戏 || this.绑定角色 == null) return;
             this.绑定角色.传永武技签到();
         }
 
@@ -640,6 +654,7 @@ namespace 游戏服务器.网络类
 
         public void 处理封包(UnknownC155 P)
         {
+            if (this.当前阶段 != 游戏阶段.正在游戏 || this.绑定角色 == null) return;
             this.绑定角色.网络连接?.发送封包(new 成就完成通知
             {
                 U1 = P.U1,
@@ -707,26 +722,31 @@ namespace 游戏服务器.网络类
 
         public void 处理封包(装备开启精炼 P)
         {
+            if (this.当前阶段 != 游戏阶段.正在游戏 || this.绑定角色 == null) return;
             this.绑定角色.装备开启精炼(P.背包类型, P.背包位置);
         }
 
         public void 处理封包(装备重新精炼 P)
         {
+            if (this.当前阶段 != 游戏阶段.正在游戏 || this.绑定角色 == null) return;
             this.绑定角色.装备重新精炼(P.背包类型, P.背包位置, P.材料类型, P.材料位置, P.特殊标记);
         }
 
         public void 处理封包(装备精炼替换 P)
         {
+            if (this.当前阶段 != 游戏阶段.正在游戏 || this.绑定角色 == null) return;
             this.绑定角色.装备精炼替换(P.背包类型, P.背包位置);
         }
 
         public void 处理封包(装备转移精炼 P)
         {
+            if (this.当前阶段 != 游戏阶段.正在游戏 || this.绑定角色 == null) return;
             this.绑定角色.装备转移精炼(P.背包类型, P.背包位置, P.材料类型, P.材料位置);
         }
 
         public void 处理封包(升级玛法特权 P)
         {
+            if (this.当前阶段 != 游戏阶段.正在游戏 || this.绑定角色 == null) return;
             this.绑定角色.升级玛法特权(P.特权编号);
         }
 
@@ -739,6 +759,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.场景加载 && this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"连接异常断开链接.  处理封包: {P.GetType()}, 当前阶段: {this.当前阶段}"));
+                return;
             }
             else if (this.绑定角色.坐骑列表.Contains(P.编号))
             {
@@ -756,6 +777,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.场景加载 && this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"连接异常断开链接.  处理封包: {P.GetType()}, 当前阶段: {this.当前阶段}"));
+                return;
             }
             else if (this.绑定角色 != null && this.绑定角色.坐骑列表.Contains(P.坐骑编号) && 游戏坐骑.御兽之力栏数.TryGetValue((byte)this.绑定角色.御兽之力等级, out value) && value >= P.御兽栏位)
             {
@@ -774,6 +796,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.场景加载 && this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"连接异常断开链接.  处理封包: {P.GetType()}, 当前阶段: {this.当前阶段}"));
+                return;
             }
             else
             {
@@ -786,6 +809,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.场景加载 && this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"连接异常断开链接.  处理封包: {P.GetType()}, 当前阶段: {this.当前阶段}"));
+                return;
             }
             else
             {
@@ -798,6 +822,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.场景加载 && this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"连接异常断开链接.  处理封包: {P.GetType()}, 当前阶段: {this.当前阶段}"));
+                return;
             }
             else
             {
@@ -810,6 +835,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"Phase exception, disconnected.  Processing packet: {P.GetType()}, Current phase: {this.当前阶段}"));
+                return;
             }
             else if (!Settings.开启自动战斗)
             {
@@ -877,6 +903,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"连接异常断开链接.  处理封包: {P.GetType()}, 当前阶段: {this.当前阶段}"));
+                return;
             }
             else
             {
@@ -889,6 +916,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.场景加载 && this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"连接异常断开链接.  处理封包: {P.GetType()}, 当前阶段: {this.当前阶段}"));
+                return;
             }
             else
             {
@@ -901,6 +929,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.场景加载 && this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"连接异常断开链接.  处理封包: {P.GetType()}, 当前阶段: {this.当前阶段}"));
+                return;
             }
             else
             {
@@ -913,6 +942,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.场景加载 && this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"连接异常断开链接.  处理封包: {P.GetType()}, 当前阶段: {this.当前阶段}"));
+                return;
             }
             else
             {
@@ -945,6 +975,7 @@ namespace 游戏服务器.网络类
                 if (this.当前阶段 != 游戏阶段.正在游戏 && this.当前阶段 != 游戏阶段.场景加载)
                 {
                     this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                    return;
                 }
                 else
                 {
@@ -961,6 +992,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏 && this.当前阶段 != 游戏阶段.场景加载)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -973,6 +1005,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
         }
 
@@ -981,6 +1014,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏 && this.当前阶段 != 游戏阶段.场景加载)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -993,6 +1027,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             if (Settings.开启任务系统)
             {
@@ -1005,6 +1040,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else if (Settings.开启任务系统)
             {
@@ -1017,6 +1053,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else if (Settings.开启成就系统)
             {
@@ -1029,6 +1066,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.场景加载 && this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1041,6 +1079,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.场景加载 && this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1056,6 +1095,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.场景加载 && this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1071,6 +1111,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1084,6 +1125,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else if (Enum.IsDefined(typeof(攻击模式), (int)P.攻击模式) && Enum.TryParse<攻击模式>(P.攻击模式.ToString(), out result))
             {
@@ -1101,6 +1143,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else if (Enum.IsDefined(typeof(宠物模式), (int)P.宠物模式) && Enum.TryParse<宠物模式>(P.宠物模式.ToString(), out result))
             {
@@ -1117,6 +1160,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏 && this.当前阶段 != 游戏阶段.场景加载)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
         }
 
@@ -1126,6 +1170,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else if (Enum.IsDefined(typeof(游戏方向), (int)P.转动方向) && Enum.TryParse<游戏方向>(P.转动方向.ToString(), out result))
             {
@@ -1142,6 +1187,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1154,6 +1200,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1166,6 +1213,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1178,6 +1226,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else if (P.技能栏位 < 32)
             {
@@ -1194,6 +1243,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1206,6 +1256,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.场景加载 && this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1218,6 +1269,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1231,6 +1283,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.场景加载 && this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1244,6 +1297,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.场景加载 && this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1256,6 +1310,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 == 游戏阶段.正在登录)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1268,6 +1323,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             this.绑定角色.网络连接?.发送封包(new 同步元宝数量
             {
@@ -1280,6 +1336,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             this.绑定角色.拾取脚下物品(P.物品编号);
         }
@@ -1289,6 +1346,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1301,6 +1359,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏 && this.当前阶段 != 游戏阶段.场景加载)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else if (this.绑定角色 != null)
             {
@@ -1313,6 +1372,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1325,6 +1385,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1337,6 +1398,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1349,6 +1411,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1361,6 +1424,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1373,6 +1437,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1385,6 +1450,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1397,6 +1463,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else if (P.物品位置 < 100)
             {
@@ -1413,6 +1480,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1425,6 +1493,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1437,6 +1506,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1449,6 +1519,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1461,6 +1532,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1473,6 +1545,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1485,6 +1558,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1498,6 +1572,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else if (Enum.TryParse<物品背包分类>(P.背包类型.ToString(), out result) && Enum.IsDefined(typeof(物品背包分类), result))
             {
@@ -1515,6 +1590,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else if (Enum.TryParse<物品背包分类>(P.背包类型.ToString(), out result) && Enum.IsDefined(typeof(物品背包分类), result))
             {
@@ -1531,6 +1607,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1543,6 +1620,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else if (this.绑定角色.玩家合成装备(合成勋章: false, P.合成模板, P.未知参数, P.合成参数) > 0)
             {
@@ -1555,6 +1633,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else if (this.绑定角色.玩家合成装备(合成勋章: true, P.合成模板, P.未知参数, P.合成参数) > 0)
             {
@@ -1632,6 +1711,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1644,6 +1724,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1656,6 +1737,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else if (this.绑定角色.玩家武器铸魂() > 0)
             {
@@ -1671,6 +1753,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1741,6 +1824,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else if (this.绑定角色.玩家武器祈祷(P.未知参数) > 0)
             {
@@ -1753,6 +1837,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1765,6 +1850,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1782,6 +1868,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1794,6 +1881,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1806,6 +1894,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1818,6 +1907,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1830,6 +1920,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1842,6 +1933,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1854,6 +1946,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1866,6 +1959,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1878,6 +1972,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1890,6 +1985,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1902,6 +1998,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1914,6 +2011,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1926,6 +2024,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1938,6 +2037,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1950,6 +2050,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1962,6 +2063,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1974,6 +2076,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1986,6 +2089,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -1998,6 +2102,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2010,6 +2115,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2022,6 +2128,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2034,6 +2141,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2046,6 +2154,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2058,6 +2167,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             this.绑定角色?.查看他人龙卫(P.对象编号);
         }
@@ -2067,6 +2177,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             this.绑定角色.扩展龙卫记录();
         }
@@ -2076,6 +2187,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             this.绑定角色.龙卫传承觉醒(P.属性位置, P.当前阶段);
         }
@@ -2085,6 +2197,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             this.绑定角色.龙卫传承重塑(P.属性位置, P.模式, P.附加);
         }
@@ -2094,6 +2207,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             this.绑定角色.龙卫记录部位(P.记录部位, P.记录序号);
         }
@@ -2103,6 +2217,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             this.绑定角色.龙卫恢复部位(P.记录部位, P.记录序号);
         }
@@ -2112,6 +2227,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             this.绑定角色.龙卫修改备注(P.记录序号, P.文本信息);
         }
@@ -2121,6 +2237,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             this.绑定角色.龙卫全套恢复(P.恢复模式, P.记录序号);
         }
@@ -2130,6 +2247,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
         }
 
@@ -2138,6 +2256,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             this.绑定角色?.查询奖励找回();
         }
@@ -2147,6 +2266,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             this.绑定角色?.找回日程奖励(P.日程编号, P.找回次数);
             this.SendRaw(340, 14, new byte[12]
@@ -2161,6 +2281,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2173,6 +2294,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
         }
 
@@ -2181,6 +2303,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             this.绑定角色.领取玛法传说(P.领取编号);
         }
@@ -2190,6 +2313,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2202,6 +2326,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2214,6 +2339,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2226,6 +2352,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2238,6 +2365,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2250,6 +2378,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2262,6 +2391,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2274,6 +2404,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2286,6 +2417,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2298,6 +2430,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2310,6 +2443,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2322,6 +2456,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2334,6 +2469,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2346,6 +2482,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2358,6 +2495,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2370,6 +2508,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2382,6 +2521,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2394,6 +2534,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2406,6 +2547,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2418,6 +2560,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2430,6 +2573,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
         }
 
@@ -2438,6 +2582,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
         }
 
@@ -2446,6 +2591,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else if (P.字节数据.Length < 7)
             {
@@ -2466,6 +2612,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2478,6 +2625,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2490,6 +2638,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2502,6 +2651,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2514,6 +2664,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
         }
 
@@ -2522,6 +2673,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else if (P.字节数据.Length < 7)
             {
@@ -2542,6 +2694,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else if (P.字节数据.Length < 6)
             {
@@ -2562,6 +2715,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.场景加载 && this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2574,6 +2728,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.场景加载 && this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
         }
 
@@ -2582,6 +2737,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2594,6 +2750,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2606,6 +2763,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2618,6 +2776,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2630,6 +2789,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2642,6 +2802,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2654,6 +2815,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2666,6 +2828,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2678,6 +2841,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2690,6 +2854,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2702,6 +2867,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2714,6 +2880,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2726,6 +2893,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2738,6 +2906,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2750,6 +2919,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.场景加载 && this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2762,6 +2932,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2774,6 +2945,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2786,6 +2958,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2798,6 +2971,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2810,6 +2984,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2822,6 +2997,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2834,6 +3010,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2846,6 +3023,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2858,6 +3036,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2870,6 +3049,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2882,6 +3062,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2894,6 +3075,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2906,6 +3088,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2922,6 +3105,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2934,6 +3118,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2946,6 +3131,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2958,6 +3144,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2974,6 +3161,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2986,6 +3174,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -2998,6 +3187,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3010,6 +3200,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3022,6 +3213,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3034,6 +3226,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3046,6 +3239,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3058,6 +3252,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3070,6 +3265,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3082,6 +3278,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3094,6 +3291,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3106,6 +3304,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3118,6 +3317,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             this.绑定角色.所属行会?.更新行会权限(P.行会职位, P.权限标志);
         }
@@ -3127,6 +3327,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3139,6 +3340,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3151,6 +3353,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.场景加载 && this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
         }
 
@@ -3159,6 +3362,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
         }
 
@@ -3167,6 +3371,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
         }
 
@@ -3175,6 +3380,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.场景加载 && this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
         }
 
@@ -3183,6 +3389,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.场景加载 && this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
         }
 
@@ -3191,6 +3398,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.场景加载 && this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3203,6 +3411,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3215,6 +3424,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
         }
 
@@ -3223,6 +3433,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3235,6 +3446,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3247,6 +3459,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3259,6 +3472,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3271,6 +3485,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3283,6 +3498,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
         }
 
@@ -3291,6 +3507,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3303,6 +3520,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3315,6 +3533,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3327,6 +3546,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3339,6 +3559,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3351,6 +3572,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3363,6 +3585,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3375,6 +3598,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3387,6 +3611,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3408,6 +3633,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3420,6 +3646,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
         }
 
@@ -3428,6 +3655,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
         }
 
@@ -3436,6 +3664,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
         }
 
@@ -3444,6 +3673,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
         }
 
@@ -3452,6 +3682,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
         }
 
@@ -3460,6 +3691,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else if (P.操作标识 == 1)
             {
@@ -3484,6 +3716,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3496,6 +3729,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3508,6 +3742,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3520,6 +3755,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3532,6 +3768,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3544,6 +3781,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3556,6 +3794,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3568,6 +3807,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3580,6 +3820,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3592,6 +3833,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3604,6 +3846,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3616,6 +3859,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3628,6 +3872,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3640,6 +3885,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             this.绑定角色.领取每日签到();
         }
@@ -3652,6 +3898,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 0)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else if (系统数据.数据.网卡封禁.TryGetValue(P.物理地址, out v) && v > 主程.当前时间)
             {
@@ -3692,6 +3939,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.选择角色)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3704,6 +3952,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.选择角色)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3716,6 +3965,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.选择角色)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3728,6 +3978,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.选择角色)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3740,6 +3991,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.选择角色)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3752,6 +4004,7 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
             else
             {
@@ -3780,6 +4033,7 @@ namespace 游戏服务器.网络类
                 return;
             }
             this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+            return;
         }
 
         public void 处理封包(历练兑换经验 P)
@@ -3791,16 +4045,19 @@ namespace 游戏服务器.网络类
             if (this.当前阶段 != 游戏阶段.正在游戏)
             {
                 this.尝试断开连接(new Exception($"阶段异常,断开连接.  处理封包: {P.GetType()},  当前阶段:{this.当前阶段}"));
+                return;
             }
         }
 
         public void 处理封包(开始狩猎任务 P)
         {
+            if (this.当前阶段 != 游戏阶段.正在游戏 || this.绑定角色 == null) return;
             this.绑定角色.开始狩猎任务();
         }
 
         public void 处理封包(请求同步狩猎 P)
         {
+            if (this.当前阶段 != 游戏阶段.正在游戏 || this.绑定角色 == null) return;
             this.发送封包(new 同步狩猎信息
             {
                 未知标志 = 1,
@@ -3812,26 +4069,31 @@ namespace 游戏服务器.网络类
 
         public void 处理封包(领取狩猎奖励 P)
         {
+            if (this.当前阶段 != 游戏阶段.正在游戏 || this.绑定角色 == null) return;
             this.绑定角色.领取狩猎奖励();
         }
 
         public void 处理封包(查询狩猎详情 P)
         {
+            if (this.当前阶段 != 游戏阶段.正在游戏 || this.绑定角色 == null) return;
             this.绑定角色.发送狩猎详情();
         }
 
         public void 处理封包(刷新狩猎任务 P)
         {
+            if (this.当前阶段 != 游戏阶段.正在游戏 || this.绑定角色 == null) return;
             this.绑定角色.刷新狩猎详情();
         }
 
         public void 处理封包(放弃狩猎任务 P)
         {
+            if (this.当前阶段 != 游戏阶段.正在游戏 || this.绑定角色 == null) return;
             this.绑定角色.放弃狩猎任务();
         }
 
         public void 处理封包(请求悬赏任务 P)
         {
+            if (this.当前阶段 != 游戏阶段.正在游戏 || this.绑定角色 == null) return;
             if (Settings.开启任务系统)
             {
                 this.绑定角色.请求悬赏任务(P.任务类型);
@@ -3840,6 +4102,7 @@ namespace 游戏服务器.网络类
 
         public void 处理封包(请求悬赏剩余 P)
         {
+            if (this.当前阶段 != 游戏阶段.正在游戏 || this.绑定角色 == null) return;
             if (Settings.开启任务系统)
             {
                 this.绑定角色.请求悬赏剩余(P.任务类型);
@@ -3848,6 +4111,7 @@ namespace 游戏服务器.网络类
 
         public void 处理封包(刷新悬赏任务 P)
         {
+            if (this.当前阶段 != 游戏阶段.正在游戏 || this.绑定角色 == null) return;
             if (Settings.开启任务系统)
             {
                 this.绑定角色.刷新悬赏任务(P.对话编号);
@@ -3856,6 +4120,7 @@ namespace 游戏服务器.网络类
 
         public void 处理封包(完成悬赏任务 P)
         {
+            if (this.当前阶段 != 游戏阶段.正在游戏 || this.绑定角色 == null) return;
             if (Settings.开启任务系统)
             {
                 this.绑定角色.完成悬赏任务(P.物品编号, P.物品容器, P.物品位置, P.任务编号);
@@ -3864,6 +4129,7 @@ namespace 游戏服务器.网络类
 
         public void 处理封包(领取杀怪成就 P)
         {
+            if (this.当前阶段 != 游戏阶段.正在游戏 || this.绑定角色 == null) return;
             if (Settings.开启成就系统)
             {
                 this.绑定角色.领取杀怪成就(P.成就编号, P.进度编号);
@@ -3872,6 +4138,7 @@ namespace 游戏服务器.网络类
 
         public void 处理封包(领取日程奖励 P)
         {
+            if (this.当前阶段 != 游戏阶段.正在游戏 || this.绑定角色 == null) return;
             this.绑定角色.领取日程奖励(P.奖励进度);
         }
 

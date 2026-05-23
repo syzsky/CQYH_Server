@@ -250,7 +250,8 @@ namespace 游戏登录器
             return true;
         }
 
-        // 服务器回显字符串净化：截断 + 去除控制字符，避免恶意服务器用超长串/控制字符冲击 UI
+        // 服务器回显字符串净化：截断 + 去除控制字符与 Unicode 格式字符,
+        // 避免恶意服务器用 RTLO / ZWJ / ZWNJ / BOM 等不可见字符做 UI 钓鱼/欺骗 (LOW-7).
         private static string 净化显示文本(string s, int maxLen)
         {
             if (string.IsNullOrEmpty(s))
@@ -265,10 +266,14 @@ namespace 游戏登录器
             for (int i = 0; i < s.Length; i++)
             {
                 char c = s[i];
-                if (c >= 0x20 && c != 0x7F)
-                {
-                    sb.Append(c);
-                }
+                if (c < 0x20 || c == 0x7F) continue;            // C0 + DEL
+                if (c >= 0x80 && c <= 0x9F) continue;           // C1
+                if (c >= 0x200B && c <= 0x200F) continue;       // ZWSP/ZWNJ/ZWJ/LRM/RLM
+                if (c >= 0x202A && c <= 0x202E) continue;       // LRE/RLE/PDF/LRO/RLO (RTLO 攻击)
+                if (c >= 0x2060 && c <= 0x2064) continue;       // WJ/INVISIBLE 系列
+                if (c >= 0x2066 && c <= 0x2069) continue;       // LRI/RLI/FSI/PDI
+                if (c == 0xFEFF) continue;                      // BOM / ZWNBSP
+                sb.Append(c);
             }
             return sb.ToString();
         }
@@ -292,7 +297,7 @@ namespace 游戏登录器
             return true;
         }
 
-        // 区服名同样会被拼进命令行参数；禁止空格、引号、控制字符、路径分隔符与命令行特殊符号
+        // 区服名同样会被拼进命令行参数；用白名单更稳: ASCII 字母数字 + _ - + CJK (常用汉字 + 扩展 A)
         private static bool 是合法区服名(string s)
         {
             if (string.IsNullOrEmpty(s) || s.Length > 32)
@@ -302,7 +307,13 @@ namespace 游戏登录器
             for (int i = 0; i < s.Length; i++)
             {
                 char c = s[i];
-                if (c < 0x20 || c == ' ' || c == '"' || c == '\'' || c == '/' || c == '\\' || c == ',' || c == ':' || c == '\t')
+                bool ok = (c >= '0' && c <= '9')
+                    || (c >= 'a' && c <= 'z')
+                    || (c >= 'A' && c <= 'Z')
+                    || c == '_' || c == '-'
+                    || (c >= 0x4E00 && c <= 0x9FFF)
+                    || (c >= 0x3400 && c <= 0x4DBF);
+                if (!ok)
                 {
                     return false;
                 }
@@ -363,7 +374,10 @@ namespace 游戏登录器
                         启动_选择游戏区服.Items.Clear();
                         游戏区服.Clear();
                         string[] array2 = array[3].Split(new char[2] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-                        for (int i = 0; i < array2.Length; i++)
+                        // MED-3: 限制区服条目数, 防止恶意账号服务器返回上万条 (UI 冻结 / 内存膨胀)
+                        const int 区服列表上限 = 100;
+                        int 区服计数 = 0;
+                        for (int i = 0; i < array2.Length && 区服计数 < 区服列表上限; i++)
                         {
                             string[] array3 = array2[i].Split(new char[2] { ',', '/' }, StringSplitOptions.RemoveEmptyEntries);
                             if (array3.Length != 3
@@ -377,6 +391,7 @@ namespace 游戏登录器
                             }
                             游戏区服[array3[2]] = new IPEndPoint(区服地址, 区服端口);
                             启动_选择游戏区服.Items.Add(array3[2]);
+                            区服计数++;
                         }
                         主选项卡.SelectedIndex = 3;
                         // 保存本地输入框的账号而非服务器回显, 并通过 DPAPI 加密
@@ -456,12 +471,18 @@ namespace 游戏登录器
                             }
                             string 区服名 = 启动_选中区服标签.Text;
                             string 票据 = array[3];
-                            string arguments = "-wegame=" + $"1,1,{value.Address},{value.Port}," + $"1,1,{value.Address},{value.Port}," + 区服名 + "  " + $"/ip:1,1,{value.Address} " + $"/port:{value.Port} " + "/ticket:" + 票据 + " /AreaName:" + 区服名;
                             Settings.Default.保存区服 = 加密本地字符串(区服名);
                             Settings.Default.Save();
                             游戏进程 = new Process();
                             游戏进程.StartInfo.FileName = 游戏路径;
-                            游戏进程.StartInfo.Arguments = arguments;
+                            // 使用 ArgumentList 由 .NET 按 CommandLineToArgvW 规则自动转义,
+                            // 避免拼接 Arguments 时区服名/票据带特殊字符破出参数边界 (虽然两者都
+                            // 已有白名单, 但纵深防御不依赖白名单完整性).
+                            游戏进程.StartInfo.ArgumentList.Add($"-wegame=1,1,{value.Address},{value.Port},1,1,{value.Address},{value.Port},{区服名}");
+                            游戏进程.StartInfo.ArgumentList.Add($"/ip:1,1,{value.Address}");
+                            游戏进程.StartInfo.ArgumentList.Add($"/port:{value.Port}");
+                            游戏进程.StartInfo.ArgumentList.Add($"/ticket:{票据}");
+                            游戏进程.StartInfo.ArgumentList.Add($"/AreaName:{区服名}");
                             游戏进程.StartInfo.UseShellExecute = false;
                             游戏进程.StartInfo.WorkingDirectory = Environment.CurrentDirectory;
                             游戏进程.Start();

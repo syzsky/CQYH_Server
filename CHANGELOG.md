@@ -10,6 +10,24 @@
 
 ---
 
+## [0.4.0] - 2026-05-24
+
+### 变更 (Changed)
+- **引擎命名为 Elaina (伊蕾娜)**：项目从无名"游戏服务器"正式定名为 **Elaina Engine**。
+  - `README.md` 标题更新为 `Elaina Engine · 伊蕾娜引擎`
+  - `游戏服务器/Properties/AssemblyInfo.cs`:
+    - `AssemblyTitle` / `AssemblyProduct` → `Elaina Engine`
+    - `AssemblyDescription` → `Elaina (伊蕾娜) - Game Server Engine`
+    - `AssemblyVersion` → `0.4.0.0`
+- **清除原始厂商信息**：
+  - `AssemblyCompany` 从 "福建腾柏网络有限公司" 改为空（与该公司的 `pay.tengcanol.com` 是同一主体，参见 SECURITY_AUDIT.md DEEP-01 / DEEP-02 中关于该域名的发现）
+  - `AssemblyCopyright` 从 "Copyright © 福建腾柏网络有限公司 2023" 改为空（无法证明所有权传递，留空更合规）
+
+### 备注
+- 底层 namespace `游戏服务器` 与 csproj 中的 `AssemblyName` **保持不变**，避免破坏现有代码引用和已部署实例的产物名称。
+
+---
+
 ## [0.3.0] - 2026-05-24
 
 ### 重构 (Refactor)
