@@ -59,7 +59,7 @@ YH_Server_Code/
 
 ## 🌟 星级历史
 
-[![Star History Chart](https://api.star-history.com/svg?repos=awp0721/cqyh_server&type=Date)](https://star-history.com/#awp0721/cqyh_server&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=awp0721/cqyh_server&type=Date&_=20260523a)](https://star-history.com/#awp0721/cqyh_server&Date)
 
 ## 📄 许可
 
