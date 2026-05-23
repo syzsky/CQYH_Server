@@ -53,6 +53,11 @@ YH_Server_Code/
 - 登录界面
 - 网络通信封装
 
+## 📖 相关文档
+
+- [CHANGELOG.md](CHANGELOG.md) —— 版本更新日志
+- [SECURITY_AUDIT.md](SECURITY_AUDIT.md) —— 安全审计报告
+
 ## ⚠️ 免责声明
 
 本仓库仅供学习与技术研究使用，请勿用于任何商业用途。使用本代码所产生的任何后果由使用者自行承担。
