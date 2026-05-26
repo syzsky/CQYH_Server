@@ -1,5 +1,6 @@
 // .NET 8 global usings: 让全项目都不用再手写这些 using.
 // 子命名空间下的类型自动对所有源文件可见.
+global using Newtonsoft.Json.Linq;
 global using 游戏服务器.副本类;
 global using 游戏服务器.地图类;
 global using 游戏服务器.工具类;
