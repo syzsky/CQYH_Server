@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -76,6 +77,10 @@ namespace 游戏服务器
         public static Thread 主线程;
 
         public static Random 随机数;
+
+        // MISC-03: 安全随机源,用于关键经济道具掉落等需不可预测性的场景.
+        // 普通游戏逻辑(动画/粒子/非经济随机)继续使用 System.Random 随机数.
+        private static readonly RandomNumberGenerator 加密随机源;
 
         public static ConcurrentQueue<Action> 重载任务列表;
 
@@ -160,8 +165,23 @@ namespace 游戏服务器
                 return 0;
             }
         }
+
+        // MISC-03: 使用内核 CSPRNG 生成不可预测的随机整数 [minInclusive, maxExclusive).
+        // 用于关键经济道具掉落、稀有物品判断等场景,防止玩家通过观测种子预测结果.
+        public static int 生成安全随机数(int minInclusive, int maxExclusive)
+        {
+            if (minInclusive >= maxExclusive)
+                return minInclusive;
+            byte[] bytes = new byte[4];
+            加密随机源.GetBytes(bytes);
+            uint range = (uint)(maxExclusive - minInclusive);
+            uint value = BitConverter.ToUInt32(bytes, 0) % range;
+            return minInclusive + (int)value;
+        }
+
         static 主程()
         {
+            主程.加密随机源 = RandomNumberGenerator.Create();
             主程.重载任务列表 = new ConcurrentQueue<Action>();
             主程.Scripts = new Dictionary<int, NPCScript>();
             主程.DisplayLogs = new ConcurrentQueue<string>();
