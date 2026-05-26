@@ -92,8 +92,8 @@ namespace 游戏服务器.管理命令
 							玩家实例.发送顶部公告("礼包码验证失败,请联系管理员");
 							return;
 						}
-						IJProperty iJProperty;
-						iJProperty = jObject.Properties().FirstOrDefault((IJProperty p) => p.Name.Equals("code", StringComparison.OrdinalIgnoreCase));
+						JProperty iJProperty;
+						iJProperty = jObject.Properties().FirstOrDefault((JProperty p) => p.Name.Equals("code", StringComparison.OrdinalIgnoreCase));
 						if (iJProperty == null)
 						{
 							主程.添加系统日志($"[{name}]{this.角色名}领取{this.礼包码}失败,查询返回值反序列化JObject失败:{@string}");
@@ -106,8 +106,8 @@ namespace 游戏服务器.管理命令
 							玩家实例.发送顶部公告("礼包码验证失败,请联系管理员");
 							return;
 						}
-						IJProperty iJProperty2;
-						iJProperty2 = (jObject.Properties().FirstOrDefault((IJProperty p) => p.Name.Equals("data", StringComparison.OrdinalIgnoreCase)) as JObject)?.Properties().FirstOrDefault((IJProperty p) => p.Name.Equals("typeid", StringComparison.OrdinalIgnoreCase));
+						JProperty iJProperty2;
+						iJProperty2 = (jObject.Properties().FirstOrDefault((JProperty p) => p.Name.Equals("data", StringComparison.OrdinalIgnoreCase)) as JObject)?.Properties().FirstOrDefault((JProperty p) => p.Name.Equals("typeid", StringComparison.OrdinalIgnoreCase));
 						if (iJProperty2 == null)
 						{
 							主程.添加系统日志($"[{name}]{this.角色名}领取{this.礼包码}失败,查询返回值data字段错误,未找到typeid:{@string}");
