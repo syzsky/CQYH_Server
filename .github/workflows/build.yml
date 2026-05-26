@@ -1,0 +1,41 @@
+name: Build EXE
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore
+        run: dotnet restore YH_Server_Code.sln
+
+      - name: Build
+        run: dotnet publish YH_Server_Code.sln -c Release -o ./publish --self-contained false
+
+      - name: Upload 游戏服务器
+        uses: actions/upload-artifact@v4
+        with:
+          name: 游戏服务器
+          path: publish/游戏服务器.exe
+
+      - name: Upload 账号服务器
+        uses: actions/upload-artifact@v4
+        with:
+          name: 账号服务器
+          path: publish/账号服务器.exe
+
+      - name: Upload 游戏登录器
+        uses: actions/upload-artifact@v4
+        with:
+          name: 游戏登录器
+          path: publish/游戏登录器.exe
